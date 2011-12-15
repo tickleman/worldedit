@@ -30,6 +30,7 @@ import java.util.zip.ZipEntry;
 
 import com.sk89q.util.yaml.YAMLProcessor;
 import com.sk89q.wepif.PermissionsResolverManager;
+
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -107,6 +108,8 @@ public class WorldEditPlugin extends JavaPlugin {
 
         getServer().getScheduler().scheduleAsyncRepeatingTask(this,
                 new SessionTimer(controller, getServer()), 120, 120);
+
+        BukkitUtil.registerCommands(controller.getCommandsManager());
     }
 
     /**

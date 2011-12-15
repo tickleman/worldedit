@@ -19,13 +19,25 @@
 
 package com.sk89q.worldedit.bukkit;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
+import java.util.Map.Entry;
 
 import org.bukkit.block.*;
+import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.SimplePluginManager;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Server;
 import org.bukkit.World;
+
+import com.sk89q.minecraft.util.commands.Command;
+import com.sk89q.minecraft.util.commands.CommandPermissions;
+import com.sk89q.minecraft.util.commands.CommandsManager;
+import com.sk89q.minecraft.util.commands.Console;
 import com.sk89q.worldedit.*;
 import com.sk89q.worldedit.Vector;
 
@@ -111,4 +123,37 @@ public class BukkitUtil {
     }
 
     public static final double EQUALS_PRECISION = 0.0001;
+
+    public static void registerCommands(CommandsManager<?> commandsManager) {
+        PluginManager pm = Bukkit.getServer().getPluginManager();
+        if (pm instanceof SimplePluginManager) {
+            try {
+                SimplePluginManager spm = (SimplePluginManager) pm;
+                Field SimplePluginManager_commandMap = SimplePluginManager.class.getDeclaredField("commandMap");
+                SimplePluginManager_commandMap.setAccessible(true);
+                SimpleCommandMap scm = (SimpleCommandMap) SimplePluginManager_commandMap.get(spm);
+
+                for (Entry<String, Method> entry : commandsManager.getMethods().get(null).entrySet()) {
+                    Method method = entry.getValue();
+                    if (!method.isAnnotationPresent(Console.class)) {
+                        continue;
+                    }
+
+                    String alias = entry.getKey();
+                    Command command = method.getAnnotation(Command.class);
+                    CommandPermissions commandPermissions = method.getAnnotation(CommandPermissions.class);
+
+                    if (scm.getCommand(alias) != null) {
+                        //System.out.println("WorldEdit: Cannot register command " + alias + " for console usage: already registered.");
+                        continue;
+                    }
+
+                    scm.register("we", new WorldEditCommand(command, commandPermissions));
+                }
+            } catch (Exception e) {
+                System.out.println("WorldEdit: Cannot register commands for console usage:");
+                e.printStackTrace();
+            }
+        }
+    }
 }
