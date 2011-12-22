@@ -63,7 +63,9 @@ public class BukkitWorld extends LocalWorld {
     /**
      * Construct the object.
      * @param world
+     * @deprecated Use {@link BukkitUtil#getLocalWorld(World)}
      */
+    @Deprecated
     public BukkitWorld(World world) {
         this.world = world;
     }

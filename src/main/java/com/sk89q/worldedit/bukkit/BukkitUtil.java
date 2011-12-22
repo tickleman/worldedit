@@ -33,15 +33,36 @@ public class BukkitUtil {
     private BukkitUtil() {
     }
 
-    private static final Map<World, LocalWorld> wlw = new HashMap<World, LocalWorld>();
+    private static final Map<World, LocalWorld> bukkitToLocalWorld = new HashMap<World, LocalWorld>();
 
-    public static LocalWorld getLocalWorld(World w) {
-        LocalWorld lw = wlw.get(w);
-        if (lw == null) {
-            lw = new BukkitWorld(w);
-            wlw.put(w, lw);
+    private static final Object[] classMappings = {
+        "org.bukkit.craftbukkit.CraftWorld", CraftBukkitWorld.class,
+        //TODO: add cases for Glowstone and other servers here
+    };
+
+    @SuppressWarnings({ "unchecked", "deprecation" })
+    public static LocalWorld getLocalWorld(World bukkitWorld) {
+        LocalWorld localWorld = bukkitToLocalWorld.get(bukkitWorld);
+        if (localWorld == null) {
+            for (int i = 0; i < classMappings.length; i += 2) {
+                try {
+                    Class<? extends World> cls = (Class<? extends World>) Class.forName((String) classMappings[i]);
+
+                    if (cls.isAssignableFrom(bukkitWorld.getClass())) {
+                        localWorld = ((Class<? extends LocalWorld>) classMappings[i+1]).getConstructor(World.class).newInstance(bukkitWorld);
+                        break;
+                    }
+                } catch (Throwable e) {
+                }
+            }
+
+            if (localWorld == null) {
+                localWorld = new BukkitWorld(bukkitWorld);
+            }
+
+            bukkitToLocalWorld.put(bukkitWorld, localWorld);
         }
-        return lw;
+        return localWorld;
     }
 
     public static BlockVector toVector(Block block) {
