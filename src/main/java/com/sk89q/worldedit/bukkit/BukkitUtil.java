@@ -36,6 +36,7 @@ public class BukkitUtil {
     private static final Map<World, LocalWorld> bukkitToLocalWorld = new HashMap<World, LocalWorld>();
 
     private static final Object[] classMappings = {
+        "org.getspout.spoutapi.SpoutWorld", SpoutCraftBukkitWorld.class,
         "org.bukkit.craftbukkit.CraftWorld", CraftBukkitWorld.class,
         //TODO: add cases for Glowstone and other servers here
     };
