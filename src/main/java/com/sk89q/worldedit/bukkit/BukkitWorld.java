@@ -68,6 +68,7 @@ public class BukkitWorld extends LocalWorld {
     @Deprecated
     public BukkitWorld(World world) {
         this.world = world;
+        System.out.println("---- constructing "+getClass().getCanonicalName()+" ----");
     }
 
     /**

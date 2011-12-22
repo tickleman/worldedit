@@ -45,6 +45,7 @@ public class BukkitUtil {
     public static LocalWorld getLocalWorld(World bukkitWorld) {
         LocalWorld localWorld = bukkitToLocalWorld.get(bukkitWorld);
         if (localWorld == null) {
+            System.out.println("--- found "+bukkitWorld.getClass()+" ---");
             for (int i = 0; i < classMappings.length; i += 2) {
                 try {
                     Class<? extends World> cls = (Class<? extends World>) Class.forName((String) classMappings[i]);
