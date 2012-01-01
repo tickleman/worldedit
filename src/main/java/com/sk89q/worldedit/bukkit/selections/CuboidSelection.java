@@ -26,8 +26,13 @@ import com.sk89q.worldedit.bukkit.BukkitUtil;
 import com.sk89q.worldedit.regions.*;
 
 public class CuboidSelection extends RegionSelection {
+    protected final CuboidRegionSelector selector;
 
-    protected CuboidRegion cuboid;
+    public CuboidSelection(World world, CuboidRegionSelector sel) {
+        super(world);
+
+        selector = sel;
+    }
 
     public CuboidSelection(World world, Location pt1, Location pt2) {
         this(world, BukkitUtil.toVector(pt1), BukkitUtil.toVector(pt2));
@@ -46,22 +51,15 @@ public class CuboidSelection extends RegionSelection {
         }
 
         // Create new selector
-        CuboidRegionSelector sel = new CuboidRegionSelector(BukkitUtil.getLocalWorld(world));
+        selector = new CuboidRegionSelector(BukkitUtil.getLocalWorld(world));
 
         // set up selector
-        sel.selectPrimary(pt1);
-        sel.selectSecondary(pt2);
-
-        // set up CuboidSelection
-        cuboid = sel.getIncompleteRegion();
-
-        // set up RegionSelection
-        setRegionSelector(sel);
-        setRegion(cuboid);
+        selector.selectPrimary(pt1);
+        selector.selectSecondary(pt2);
     }
 
-    public CuboidSelection(World world, RegionSelector sel, CuboidRegion region) {
-        super(world, sel, region);
-        this.cuboid = region;
+    @Override
+    public CuboidRegionSelector getRegionSelector() {
+        return selector;
     }
 }

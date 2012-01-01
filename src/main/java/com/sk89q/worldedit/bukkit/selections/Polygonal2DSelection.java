@@ -29,12 +29,12 @@ import com.sk89q.worldedit.bukkit.BukkitUtil;
 import com.sk89q.worldedit.regions.*;
 
 public class Polygonal2DSelection extends RegionSelection {
+    protected final Polygonal2DRegionSelector selector;
 
-    protected Polygonal2DRegion poly2d;
+    public Polygonal2DSelection(World world, Polygonal2DRegionSelector sel) {
+        super(world);
 
-    public Polygonal2DSelection(World world, RegionSelector sel, Polygonal2DRegion region) {
-        super(world, sel, region);
-        this.poly2d = region;
+        selector = sel;
     }
 
     public Polygonal2DSelection(World world, List<BlockVector2D> points, int minY, int maxY) {
@@ -46,17 +46,15 @@ public class Polygonal2DSelection extends RegionSelection {
         maxY = Math.min(Math.max(0, maxY), world.getMaxHeight());
 
         // Create and set up new selector
-        Polygonal2DRegionSelector sel = new Polygonal2DRegionSelector(lWorld, points, minY, maxY);
-
-        // set up CuboidSelection
-        poly2d = sel.getIncompleteRegion();
-
-        // set up RegionSelection
-        setRegionSelector(sel);
-        setRegion(poly2d);
+        selector = new Polygonal2DRegionSelector(lWorld, points, minY, maxY);
     }
 
     public List<BlockVector2D> getNativePoints() {
-        return Collections.unmodifiableList(poly2d.getPoints());
+        return Collections.unmodifiableList(selector.getIncompleteRegion().getPoints());
+    }
+
+    @Override
+    public Polygonal2DRegionSelector getRegionSelector() {
+        return selector;
     }
 }

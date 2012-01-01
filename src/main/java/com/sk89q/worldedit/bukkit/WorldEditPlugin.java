@@ -374,25 +374,24 @@ public class WorldEditPlugin extends JavaPlugin {
         if (player == null) {
             throw new IllegalArgumentException("Null player not allowed");
         }
+
         if (!player.isOnline()) {
             throw new IllegalArgumentException("Offline player not allowed");
         }
 
-        LocalSession session = controller.getSession(wrapPlayer(player));
-        RegionSelector selector = session.getRegionSelector(BukkitUtil.getLocalWorld(player.getWorld()));
+        final LocalSession session = controller.getSession(wrapPlayer(player));
 
-        try {
-            Region region = selector.getRegion();
-            World world = ((BukkitWorld) session.getSelectionWorld()).getWorld();
+        final World world = player.getWorld();
+        final RegionSelector selector = session.getRegionSelector(BukkitUtil.getLocalWorld(player.getWorld()));
+        if (!selector.isDefined()) {
+            return null;
+        }
 
-            if (region instanceof CuboidRegion) {
-                return new CuboidSelection(world, selector, (CuboidRegion) region);
-            } else if (region instanceof Polygonal2DRegion) {
-                return new Polygonal2DSelection(world, selector, (Polygonal2DRegion) region);
-            } else {
-                return null;
-            }
-        } catch (IncompleteRegionException e) {
+        if (selector instanceof CuboidRegionSelector) {
+            return new CuboidSelection(world, (CuboidRegionSelector) selector);
+        } else if (selector instanceof Polygonal2DRegionSelector) {
+            return new Polygonal2DSelection(world, (Polygonal2DRegionSelector) selector);
+        } else {
             return null;
         }
     }
@@ -407,16 +406,20 @@ public class WorldEditPlugin extends JavaPlugin {
         if (player == null) {
             throw new IllegalArgumentException("Null player not allowed");
         }
+
         if (!player.isOnline()) {
             throw new IllegalArgumentException("Offline player not allowed");
         }
+
         if (selection == null) {
             throw new IllegalArgumentException("Null selection not allowed");
         }
 
-        LocalSession session = controller.getSession(wrapPlayer(player));
-        RegionSelector sel = selection.getRegionSelector();
-        session.setRegionSelector(BukkitUtil.getLocalWorld(player.getWorld()), sel);
-        session.dispatchCUISelection(wrapPlayer(player));
+        final BukkitPlayer localPlayer = wrapPlayer(player);
+
+        LocalSession session = controller.getSession(localPlayer);
+        RegionSelector selector = selection.getRegionSelector();
+        session.setRegionSelector(localPlayer.getWorld(), selector);
+        session.dispatchCUISelection(localPlayer);
     }
 }

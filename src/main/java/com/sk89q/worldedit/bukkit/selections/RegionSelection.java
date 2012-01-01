@@ -25,54 +25,33 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.regions.Region;
-import com.sk89q.worldedit.regions.RegionSelector;
 
 public abstract class RegionSelection implements Selection {
 
     private World world;
-    private RegionSelector selector;
-    private Region region;
 
     public RegionSelection(World world) {
         this.world = world;
     }
 
-    public RegionSelection(World world, RegionSelector selector, Region region) {
-        this.world = world;
-        this.region = region;
-        this.selector = selector;
-    }
-
-    protected Region getRegion() {
-        return region;
-    }
-
-    protected void setRegion(Region region) {
-        this.region = region;
-    }
-
-    public RegionSelector getRegionSelector() {
-        return selector;
-    }
-
-    protected void setRegionSelector(RegionSelector selector) {
-        this.selector = selector;
+    private Region getRegion() {
+        return getRegionSelector().getIncompleteRegion();
     }
 
     public Location getMinimumPoint() {
-        return toLocation(world, region.getMinimumPoint());
+        return toLocation(world, getRegion().getMinimumPoint());
     }
 
     public Vector getNativeMinimumPoint() {
-        return region.getMinimumPoint();
+        return getRegion().getMinimumPoint();
     }
 
     public Location getMaximumPoint() {
-        return toLocation(world, region.getMaximumPoint());
+        return toLocation(world, getRegion().getMaximumPoint());
     }
 
     public Vector getNativeMaximumPoint() {
-        return region.getMaximumPoint();
+        return getRegion().getMaximumPoint();
     }
 
     public World getWorld() {
@@ -80,19 +59,19 @@ public abstract class RegionSelection implements Selection {
     }
 
     public int getArea() {
-        return region.getArea();
+        return getRegion().getArea();
     }
 
     public int getWidth() {
-        return region.getWidth();
+        return getRegion().getWidth();
     }
 
     public int getHeight() {
-        return region.getHeight();
+        return getRegion().getHeight();
     }
 
     public int getLength() {
-        return region.getLength();
+        return getRegion().getLength();
     }
 
     public boolean contains(Location pt) {
@@ -100,7 +79,7 @@ public abstract class RegionSelection implements Selection {
             return false;
         }
 
-        return region.contains(toVector(pt));
+        return getRegion().contains(toVector(pt));
     }
 
 }
