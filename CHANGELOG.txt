@@ -7,14 +7,12 @@ Fixed //stack -s (again).
 Added a thickness parameter to //hollow.
 Added a block/pattern parameter to //hollow.
 Added a -l flag to /butcher, which spawns fake lightning on all killed entities.
-Now that WorldEdit has YAML handling classes, YAMLConfiguration is separate from BukkitConfiguration.
 Added support for dynamic command registration.
 //sel poly now keeps the previous selection, converting its outline into a polygon if necessary.
 Fixed //sel selection clearing not being dispatched to CUI.
 Improve zip file recognition.
 Added WECUI protocol version support. Eventually, this will disable WECUI until the user updates, but not yet.
 Added //desel and //deselect as aliases for //sel
-Now sending an additional §4§5§3§4 color code for WECUI's handshake, so it knows that it has a version of WorldEdit with protocol version support
 Added a gravity brush.
 Added support for ellipsoid and sphere selections.
 Add cuiVersion to LocalSession and set it via incoming CUI event Refactor region selectors to handle legacy versions a bit better. Because chat doesn't allow the section sign to be sent, I have to send non-color codes. Meh. closes #158
