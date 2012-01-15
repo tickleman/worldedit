@@ -1,3 +1,96 @@
+5.1:
+9240b5cb6e03520881609cbb43c14e47d57ac419 [maven-release-plugin] prepare for next development iteration
+c4031c38ba1cce7a7ff63c815717c818aa177e53 Added basic tests for the DinnerPermsResolver
+05404b005df5b13f38933289445c3e398b3e246a Added a //help command.
+caeab76abbf527b4da1cafa0f883aa784a87c206 Fixed a NullPointerException in conjunction with CraftBook.
+af6455ea6bfd5c29ff68a3f8b7fc289ba6f6f335 Made //help sort // commands ignoring prefixed slashes.
+88dd420d1fb19234534d6afcc3c5362e660bba7e Removed LocalCommandSender again. Didn't lead to anything.
+32bb810ce777d4ee355d98db38c12f4a9742b0f3 Changed all instances of new BukkitWorld to BukkitUtil.getLocalWorld, except for the one in that function.
+6d4b4718dbc799ebdaa0f49341d278c28b2ab914 Added ServerInterface.getWorlds.
+3bec3c169c3e6a938715b7b86e59cb6a2c672e57 Added BukkitCommandSender and WorldEditPlugin.wrapCommandSender.
+370ddeb9ff7b0f38de5a1a07e7565632e472024f Added support for console commands to WorldEditPlugin.
+a4d82be69798384b5abd2beb78047c1602f6d052 Made /butcher, /searchitem and /worldedit work on the console and added /we help as an alias for //help.
+6fb80856927102def1b6a8ae7272edf2b82660a9 update to bukkit build number
+4dc3c035c1538e8b1195ac8a25d1e1c410690ac4 Updated to use simplified method signature for commands. Also improved SimpleInjector.
+ba5010a272d4b40a449846c6adaa650a893fc200 Set required CraftBukkit version back to 1.0.1-R1 (i.e. RB 1597)
+4b3564a9ac76882d6fcd862ab5c7f7f1b87ce74e Fixed a warning.
+936aff06b23151d6f82bdc7542fb9c9b963fec9f Fixed //stack -s (again).
+633f6643a519a765361b20a8cd128b58f906601a Added a thickness parameter to //hollow.
+09a92fa76c73d0a00d1a1ff1c63213db49898b0d Added a block/pattern parameter to //hollow.
+050442fac3bc54004ab3e96f453ed3fa6f353b91 Added a -l flag to /butcher, which spawns fake lightning on all killed entities.
+479253821e1687ba9d1d509177e98365015ee30f Fixed //help and /we help after zml2008 broke it :)
+4a95d03230497fdd271e40e3b37295fc9dfe681e No longer using switch statement in WorldEditPlayerListener. <.<
+9aa8c5f674ee37b45f536a2f59792e41624d7d41 Now that WorldEdit has YAML handling classes, YAMLConfiguration is separate from BukkitConfiguration.
+a1e239d08c878d4dcdaf841e9c34169124e62cb1 Fixed SIOOBE when entering a blank quoted string
+c8c0c69f6d7e99baaf7f48fb07f546f500739259 Added support for dynamic command registration.
+d804144c2763e298a3d3e2a53fd57a393aa8e876 Removed command plugin.ymling from DocumentationPrinter
+376d3c8727823186bc62f510eee523fb4f482861 Added "and contributors" to all Copyright statements on the com.sk89q.worldedit.expression package.
+4b47200f27c310eafdc89e1ab1595b35f769530d Fixed some warnings.
+324a041e3853182d54fa5de4fb4d9652420f7d48 Split up some external .* imports.
+cc256aa246475f2f1631b13dda13a7524fcfcb24 Added license blocks to some files that were still missing them.
+76fd63d64b3980e4a7bc9be2c0f02719c866d9f8 Fixed a NPE in WorldEdit.getSafeFile() when extensions is null.
+7d503fdc5cf47a849dfabaa4f84f1ec779fdb6d0 //sel poly now keeps the previous selection, converting its outline into a polygon if necessary.
+370ca96a44e22fb2e767f833c9e81bc67325af1c Fixed //sel selection clearing not being dispatched to CUI.
+70205bfd119f52d568eb79f96fe5d2a165ae20aa Removed string.isEmpty() method calls
+2d8a4a9f8a08452d005bca01ae4f8923aa69968b Allow using custom input and output streams in subclasses of YAMLProcessor.
+c914432e9a22d8d02d31ecdaf171e02df3a977cc Fix bukkit dependency by adding official bukkit repo.
+05125c496e6bba563ae3775494598c2b8cf14a00 Fix test list.
+72b2c90c19276e3af1b1aadb9870069549e9ebd2 Improve zip file recognition.
+8cdfd65218d7b3909a7361e4e442194610b00211 Added WECUI protocol version support. Eventually, this will disable WECUI until the user updates, but not yet.
+70207f1370fafc65dbe606fb833e3b07da996241 Added //desel or //deselect as aliases for //sel
+0960ce46e2372734f8020880cb84c13c17475b17 Updated the min protocol version so people don't get warnings every time they join servers.
+48f529bc7a6c9329802dc2a921085e3a0d7e979e Added Vector.lengthSq()
+754997ca73a5f43d67f38fcf5a9e62a72ca59920 Now sending an additional §4§5§3§4 color code for WECUI's handshake, so it knows that it has a version of WorldEdit with protocol version support
+76f1ea9cf219a3d0924ee4567ea509dbb171dead Added a gravity brush.
+4fb44ebc1db17d524fe37a186d5225d2296a1c70 Added more flexibility to the Bukkit dynamic command registration system.
+0b5c8748b5a5b896569ce0ed87e18edaa03cad6a Fixed some warnings.
+45655e1189880505d040530b8ab2e261a6543c0f Added a legacy type id system to CUI.
+616f9a2360ffc9d60e8c7c9d354506b274a48ba0 Added support for ellipsoid and sphere selections.
+3b87953da050b3ebce6a8df95a4d2eae7103aaf8 Add cuiVersion to LocalSession and set it via incoming CUI event Refactor region selectors to handle legacy versions a bit better. Because chat doesn't allow the section sign to be sent, I have to send non-color codes. Meh. closes #158
+f2e26b07ec6f4c43e675a049ea50842b19c45d2c Some region selection fixes
+35230d12d80ab3bb82a3117634afba3993e60f5a Removed redundant line from README.md.
+f11415f45106aa9384101923ecf1447422096a37 Added Vector.toVector2D and Vector2D.toVector.
+4500f93a1bbde48dcb657fb0420e6eb70e89892b Fixed Vector.containedWithinBlock(min, max) and Vector2D.equals(Vector2D)
+6bbf167cb401a65252a729e23130f78a788c167e Moved Vector.dot further up in the file and added Vector.cross.
+9ddbcf0395b9cd76cf1e648ed5a7a46a22830232 Improved Vector.getMinimum and Vector.getMaximum.
+978d499282bc885e56402d76f05857d5fa3dd220 Added various methods to Vector2D.
+b05a72fea1e8c584b4d2bf107ecfab7671052b52 Made the fields in Polygonal2DRegion private.
+e598f8eaa020b530f4b541b52d2314ca5ef671c1 Made the fields of Polygonal2DRegionSelector private.
+c099ae5eb5f6c4c53589b370ba0fd28df0206c8f Added floor, ceil and round to Vector and Vector2D.
+b96ef7b620fe489f7b25ed337a7333ff630bae45 Allow conversion from an old region to ellipsoid when using //sel.
+7c71617dbf5b1d812366af16a680a7404c599f50 Renamed Polygonal2DRegion.getMin/MaxY to getMinimum/MaximumY.
+eafde8cc49a608e29269e28bd849fe1229cc22e8 Added Vector2D.toVector(double y).
+082a1995dbf6c7874ea64ad3c5c0db05b6c60ad6 Moved EllipsoidRegion's iterator into a separate class called RegionIterator.
+91bb159a80b19348b5e4cff297862b013b74d22d Added a .gitattributes file
+2cc008752480aa6c1dc589c80bcdbff82a91f0cc Made Polygonal2DRegion(LocalWorld) invoke one of the other constructors.
+4d708a500370dabe30776179b73f24d66b5d01ec Extracted an AbstractRegion class with some common functionality of all the region types.
+3a828c97599c8891d567f9b13f28363952611c5b Added Region.shift
+0138cd7f1c0c1aa9fe6a5a2fbb3b39ab0134edae EllipsoidRegion's constructor now takes radius, not offset radius.
+8a24fd9741452a8f4ff4b53f2fa80406290c41fa Add a cylindrical region selector.
+555758288bd6916878763ef0bfcae1400779cb1c Added BlockVector[2D].toBlockVector[2D] overrrides.
+a7530b7f8955021c9e2f7087578af741bac9c04c Added Vector.getMidpoint
+8c68cdf4a8aa624acef7cdb17560cf6c8762a4d7 Fixed Vector[2D].transform2D not using the aboutX/Z arguments properly.
+e4d3f70594be997c2092d01e4685e49e5b3245cb Vector changes.
+ef3aeda0dcfcbef538cc9a911d16952bbd185aca Added vararg expand and contract overload to Region and AbstractRegion.
+450feb6630f4c6994176c776787cf7328d4f5afa Added Vector.isCollinearWith(Vector other).
+12dbcf6bbc39c1fee42a19f1a1c1ef15a0e11304 Added Vector2D.isCollinearWith(Vector2D other).
+37da1fec407aa2f831c746ab32a8bd2eaffd3998 Added initial SpoutAPI compatibility
+3510999d25bfc6cb13c9f0a0e08241e7eb33422f Fixed some spout compatibility issues.
+f4ba28268a71caf184da026da0eaf68364859d68 Possibly fixed conflicts with other plugins since dynamic command registration was added.
+e810113ea0a5ea7d4a6e4e56d4979964670e7d79 Fixed some warnings and removed Bukkit/SpoutWorld.toLocation(pt) (replaced it by a call to the according Bukkit/SpoutUtil method)
+e1428602af9b5e3a3bb40ab3dcf4c2b896ee4afc Fixed Vector.cross and optimized the Vector tests slightly.
+750e525806e339416f557e997e34c217f4a5fe34 Added permissions support for SpoutPlayer
+c676e1ac39aaccec33aea8b7d173d63fcd3bb62f Triggering a rebuild on the jenkins. Hopefully.
+99b0345ca6bb20c2f813cfb510ebcbad66848fe8 Fixed a javadoc in Vector.java.
+4890c1ef9c4ae307574ce0b8f76f9b21e3b0a4a1 Optimized Vector[2D].containedWithin and Vector.equals slightly.
+9c3634d93d015adda08b3719a0ebcf05e25b8655 Updated for SpoutAPI Material changes
+c0d13e9b7df96d34e1367437c9b21940a8b7566f Updated for package changes in SpoutAPI
+68c821d8a619c4e2f09f33ca6c2d7114c4fc06c8 Updated for new SpoutAPI command methods
+7922c437bf4032a70039d7969256f73955200bb7 Allow copying item stacks with damage of > Byte.MAX_VALUE. Closes #972
+17cdbcac12585b433f7752fbcacacd7ff8c7aeb5 Improved formatting of YAMLProcessor output
+a6bba00f77969af5cfaa17762966730bf37f2632 A few documentation improvements.
+b4a170b265ca0df8b74f9d0c4a79f2ba101107e7 Updated for SpoutAPI changes, again.
+
 5.0:
 - Added a //g[en[erate]] command that can generate a shape given a formula
 - Added a //deform command that deforms the current selection given a formula
