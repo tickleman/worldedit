@@ -1,29 +1,29 @@
 5.1:
-05404b005df5b13f38933289445c3e398b3e246a Added a //help command.
-caeab76abbf527b4da1cafa0f883aa784a87c206 Fixed a NullPointerException in conjunction with CraftBook.
-370ddeb9ff7b0f38de5a1a07e7565632e472024f Added support for console commands to WorldEditPlugin.
-a4d82be69798384b5abd2beb78047c1602f6d052 Made /butcher, /searchitem and /worldedit work on the console and added /we help as an alias for //help.
-936aff06b23151d6f82bdc7542fb9c9b963fec9f Fixed //stack -s (again).
-633f6643a519a765361b20a8cd128b58f906601a Added a thickness parameter to //hollow.
-09a92fa76c73d0a00d1a1ff1c63213db49898b0d Added a block/pattern parameter to //hollow.
-050442fac3bc54004ab3e96f453ed3fa6f353b91 Added a -l flag to /butcher, which spawns fake lightning on all killed entities.
-9aa8c5f674ee37b45f536a2f59792e41624d7d41 Now that WorldEdit has YAML handling classes, YAMLConfiguration is separate from BukkitConfiguration.
-c8c0c69f6d7e99baaf7f48fb07f546f500739259 Added support for dynamic command registration.
-7d503fdc5cf47a849dfabaa4f84f1ec779fdb6d0 //sel poly now keeps the previous selection, converting its outline into a polygon if necessary.
-370ca96a44e22fb2e767f833c9e81bc67325af1c Fixed //sel selection clearing not being dispatched to CUI.
-72b2c90c19276e3af1b1aadb9870069549e9ebd2 Improve zip file recognition.
-8cdfd65218d7b3909a7361e4e442194610b00211 Added WECUI protocol version support. Eventually, this will disable WECUI until the user updates, but not yet.
-70207f1370fafc65dbe606fb833e3b07da996241 Added //desel or //deselect as aliases for //sel
-754997ca73a5f43d67f38fcf5a9e62a72ca59920 Now sending an additional §4§5§3§4 color code for WECUI's handshake, so it knows that it has a version of WorldEdit with protocol version support
-76f1ea9cf219a3d0924ee4567ea509dbb171dead Added a gravity brush.
-616f9a2360ffc9d60e8c7c9d354506b274a48ba0 Added support for ellipsoid and sphere selections.
-3b87953da050b3ebce6a8df95a4d2eae7103aaf8 Add cuiVersion to LocalSession and set it via incoming CUI event Refactor region selectors to handle legacy versions a bit better. Because chat doesn't allow the section sign to be sent, I have to send non-color codes. Meh. closes #158
-f2e26b07ec6f4c43e675a049ea50842b19c45d2c Some region selection fixes
-35230d12d80ab3bb82a3117634afba3993e60f5a Removed redundant line from README.md.
-b96ef7b620fe489f7b25ed337a7333ff630bae45 Allow conversion from an old region to ellipsoid when using //sel.
-8a24fd9741452a8f4ff4b53f2fa80406290c41fa Add a cylindrical region selector.
-37da1fec407aa2f831c746ab32a8bd2eaffd3998 Added initial SpoutAPI compatibility
-7922c437bf4032a70039d7969256f73955200bb7 Allow copying item stacks with damage of > Byte.MAX_VALUE. Closes #972
+Added a //help command.
+Fixed a NullPointerException in conjunction with CraftBook.
+Added support for console commands to WorldEditPlugin.
+Made /butcher, /searchitem and /worldedit work on the console and added /we help as an alias for //help.
+Fixed //stack -s (again).
+Added a thickness parameter to //hollow.
+Added a block/pattern parameter to //hollow.
+Added a -l flag to /butcher, which spawns fake lightning on all killed entities.
+Now that WorldEdit has YAML handling classes, YAMLConfiguration is separate from BukkitConfiguration.
+Added support for dynamic command registration.
+//sel poly now keeps the previous selection, converting its outline into a polygon if necessary.
+Fixed //sel selection clearing not being dispatched to CUI.
+Improve zip file recognition.
+Added WECUI protocol version support. Eventually, this will disable WECUI until the user updates, but not yet.
+Added //desel or //deselect as aliases for //sel
+Now sending an additional §4§5§3§4 color code for WECUI's handshake, so it knows that it has a version of WorldEdit with protocol version support
+Added a gravity brush.
+Added support for ellipsoid and sphere selections.
+Add cuiVersion to LocalSession and set it via incoming CUI event Refactor region selectors to handle legacy versions a bit better. Because chat doesn't allow the section sign to be sent, I have to send non-color codes. Meh. closes #158
+Some region selection fixes
+Removed redundant line from README.md.
+Allow conversion from an old region to ellipsoid when using //sel.
+Add a cylindrical region selector.
+Added initial SpoutAPI compatibility
+Allow copying item stacks with damage of > Byte.MAX_VALUE. Closes #972
 
 5.0:
 - Added a //g[en[erate]] command that can generate a shape given a formula
