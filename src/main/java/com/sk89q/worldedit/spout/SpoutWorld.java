@@ -744,4 +744,8 @@ public class SpoutWorld extends LocalWorld {
         */
         return false;
     }
+
+    @Override
+    public void fixLighting(Iterable<Vector2D> chunks) {
+    }
 }
