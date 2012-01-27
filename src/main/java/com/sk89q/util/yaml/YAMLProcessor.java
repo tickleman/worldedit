@@ -72,7 +72,11 @@ public class YAMLProcessor extends YAMLNode {
     protected String header = null;
     protected YAMLFormat format;
 
-    // Map from property key to comment. Comment may have multiple lines that are newline-separated.
+    /* 
+     * Map from property key to comment. Comment may have multiple lines that are newline-separated.
+     * Comments support based on ZerothAngel's AnnotatedYAMLConfiguration
+     * Comments are only supported with YAMLFormat.EXTENDED
+     */
     private final Map<String, String> comments = new HashMap<String, String>();
 
     public YAMLProcessor(File file, boolean writeDefaults, YAMLFormat format) {
@@ -180,7 +184,7 @@ public class YAMLProcessor extends YAMLNode {
                 writer.append(header);
                 writer.append(LINE_BREAK);
             }
-            if (comments.size() == 0) {
+            if (comments.size() == 0 || format != YAMLFormat.EXTENDED) {
                 yaml.dump(root, writer);
             } else {
                 // Iterate over each root-level property and dump
