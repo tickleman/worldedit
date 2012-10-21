@@ -22,6 +22,7 @@ package com.sk89q.worldedit.regions;
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.LocalPlayer;
 import com.sk89q.worldedit.LocalSession;
+import com.sk89q.worldedit.LocalWorld;
 import com.sk89q.worldedit.Vector;
 
 /**
@@ -30,7 +31,8 @@ import com.sk89q.worldedit.Vector;
  * @author sk89q
  */
 public class ExtendingCuboidRegionSelector extends CuboidRegionSelector {
-    public ExtendingCuboidRegionSelector() {
+    public ExtendingCuboidRegionSelector(LocalWorld world) {
+        super(world);
     }
 
     public ExtendingCuboidRegionSelector(RegionSelector oldSelector) {
@@ -42,6 +44,14 @@ public class ExtendingCuboidRegionSelector extends CuboidRegionSelector {
 
         pos1 = region.getMinimumPoint().toBlockVector();
         pos2 = region.getMaximumPoint().toBlockVector();
+        region.setPos1(pos1);
+        region.setPos2(pos2);
+    }
+
+    public ExtendingCuboidRegionSelector(LocalWorld world, Vector pos1, Vector pos2) {
+        this(world);
+        pos1 = Vector.getMinimum(pos1,  pos2);
+        pos2 = Vector.getMaximum(pos1,  pos2);
         region.setPos1(pos1);
         region.setPos2(pos2);
     }

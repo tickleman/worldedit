@@ -28,45 +28,35 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import com.sk89q.worldedit.LocalPlayer;
 import com.sk89q.worldedit.LocalWorld;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.WorldVector;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Handles all events thrown in relation to a Player
  */
 public class WorldEditListener implements Listener {
-    
+
     private WorldEditPlugin plugin;
     private boolean ignoreLeftClickAir = false;
-    private final static Pattern cuipattern = Pattern.compile("u00a74u00a75u00a73u00a74([^\\|]*)\\|?(.*)");
 
     /**
      * Called when a player plays an animation, such as an arm swing
-     * 
+     *
      * @param event Relevant event details
      */
 
     /**
      * Construct the object;
-     * 
+     *
      * @param plugin
      */
     public WorldEditListener(WorldEditPlugin plugin) {
         this.plugin = plugin;
-    }
-
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        plugin.wrapPlayer(event.getPlayer()).dispatchCUIHandshake();
     }
 
     /**
@@ -84,19 +74,15 @@ public class WorldEditListener implements Listener {
      *
      * @param event Relevant event details
      */
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-
         String[] split = event.getMessage().split(" ");
 
         if (split.length > 0) {
             split = plugin.getWorldEdit().commandDetection(split);
             split[0] = "/" + split[0];
         }
-        
+
         final String newMessage = StringUtil.joinString(split, " ");
 
         if (!newMessage.equals(event.getMessage())) {
@@ -104,7 +90,7 @@ public class WorldEditListener implements Listener {
             plugin.getServer().getPluginManager().callEvent(event);
             if (!event.isCancelled()) {
                 if (event.getMessage().length() > 0) {
-                    plugin.getServer().dispatchCommand(event.getPlayer(), 
+                    plugin.getServer().dispatchCommand(event.getPlayer(),
                             event.getMessage().substring(1));
                 }
                 event.setCancelled(true);
@@ -122,7 +108,7 @@ public class WorldEditListener implements Listener {
         if (event.useItemInHand() == Result.DENY) {
             return;
         }
-        
+
         final LocalPlayer player = plugin.wrapPlayer(event.getPlayer());
         final LocalWorld world = player.getWorld();
         final WorldEdit we = plugin.getWorldEdit();
@@ -178,28 +164,6 @@ public class WorldEditListener implements Listener {
             if (we.handleRightClick(player)) {
                 event.setCancelled(true);
             }
-        }
-    }
-
-    @EventHandler
-    public void onPlayerChat(PlayerChatEvent event) {
-        if (event.isCancelled()) {
-            return;
-        }
-        
-        Matcher matcher = cuipattern.matcher(event.getMessage());
-        if (matcher.find()) {
-            String type = matcher.group(1);
-            String args = matcher.group(2);
-            
-            if( type.equals("v") ) {
-                try {
-                    plugin.getSession(event.getPlayer()).setCUIVersion(Integer.parseInt(args));
-                    event.setCancelled(true);
-                } catch( NumberFormatException e ) {
-                }
-            }
-            
         }
     }
 }

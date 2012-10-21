@@ -100,7 +100,7 @@ public class TrueZipMcRegionChunkStore extends McRegionChunkStore {
                 name = folder + "/" + name;
             }
         } else {
-            Pattern pattern = Pattern.compile(".*\\.mcr$");
+            Pattern pattern = Pattern.compile(".*\\.mc[ra]$");
             // World pattern
             Pattern worldPattern = Pattern.compile(worldname + "\\$");
             for (Enumeration<? extends ZipEntry> e = zip.entries(); e.hasMoreElements(); ) {
@@ -164,7 +164,7 @@ public class TrueZipMcRegionChunkStore extends McRegionChunkStore {
 
             ZipEntry testEntry = e.nextElement();
 
-            if (testEntry.getName().matches(".*\\.mcr$")) {
+            if (testEntry.getName().matches(".*\\.mcr$") || testEntry.getName().matches(".*\\.mca$")) { // TODO: does this need a separate class?
                 return true;
             }
         }

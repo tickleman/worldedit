@@ -71,12 +71,22 @@ public class CylinderRegionSelector implements RegionSelector, CUIRegion {
             Vector pos2 = oldRegion.getMaximumPoint();
 
             Vector center = pos1.add(pos2).divide(2).floor();
-            region.setCenter(center);
+            region.setCenter(center.toVector2D());
             region.setRadius(pos2.toVector2D().subtract(center.toVector2D()));
 
             region.setMaximumY(Math.max(pos1.getBlockY(), pos2.getBlockY()));
             region.setMinimumY(Math.min(pos1.getBlockY(), pos2.getBlockY()));
         }
+    }
+
+    public CylinderRegionSelector(LocalWorld world, Vector2D center, Vector2D radius, int minY, int maxY) {
+        this(world);
+
+        region.setCenter(center);
+        region.setRadius(radius);
+
+        region.setMinimumY(Math.min(minY, maxY));
+        region.setMaximumY(Math.max(minY, maxY));
     }
 
     public boolean selectPrimary(Vector pos) {
@@ -85,7 +95,7 @@ public class CylinderRegionSelector implements RegionSelector, CUIRegion {
         }
 
         region = new CylinderRegion(region.getWorld());
-        region.setCenter(pos);
+        region.setCenter(pos.toVector2D());
         region.setY(pos.getBlockY());
 
         return true;

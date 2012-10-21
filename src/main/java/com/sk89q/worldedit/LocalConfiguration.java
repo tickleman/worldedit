@@ -28,7 +28,7 @@ import java.util.Set;
 
 /**
  * Represents WorldEdit's configuration.
- * 
+ *
  * @author sk89q
  */
 public abstract class LocalConfiguration {
@@ -81,6 +81,8 @@ public abstract class LocalConfiguration {
     public Set<Integer> disallowedBlocks = new HashSet<Integer>();
     public int defaultChangeLimit = -1;
     public int maxChangeLimit = -1;
+    public int defaultMaxPolygonalPoints = -1;
+    public int maxPolygonalPoints = 20;
     public String shellSaveType = "";
     public SnapshotRepository snapshotRepo = null;
     public int maxRadius = -1;
@@ -101,6 +103,7 @@ public abstract class LocalConfiguration {
     public String saveDir = "schematics";
     public String scriptsDir = "craftscripts";
     public boolean showFirstUseVersion = true;
+    public int butcherDefaultRadius = -1;
 
     /**
      * Loads the configuration.
@@ -109,7 +112,7 @@ public abstract class LocalConfiguration {
 
     /**
      * Get the working directory to work from.
-     * 
+     *
      * @return
      */
     public File getWorkingDirectory() {

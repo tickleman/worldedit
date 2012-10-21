@@ -23,7 +23,7 @@ package com.sk89q.worldedit;
  *
  * @author sk89q
  */
-public class Vector {
+public class Vector implements Comparable<Vector> {
     protected final double x, y, z;
 
     /**
@@ -576,6 +576,15 @@ public class Vector {
     }
 
     /**
+     * Returns a vector with the absolute values of the components of this vector.
+     *
+     * @return
+     */
+    public Vector positive() {
+        return new Vector(Math.abs(x), Math.abs(y), Math.abs(z));
+    }
+
+    /**
      * 2D transformation.
      *
      * @param angle in degrees
@@ -680,6 +689,14 @@ public class Vector {
 
         Vector other = (Vector) obj;
         return other.x == this.x && other.y == this.y && other.z == this.z;
+    }
+
+    @Override
+    public int compareTo(Vector other) {
+        if (y != other.y) return Double.compare(y, other.y);
+        if (z != other.z) return Double.compare(z, other.z);
+        if (x != other.x) return Double.compare(x, other.x);
+        return 0;
     }
 
     /**

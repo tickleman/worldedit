@@ -15,219 +15,141 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
 
 package com.sk89q.worldedit.blocks;
 
-import com.sk89q.jnbt.*;
-import com.sk89q.worldedit.data.*;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.Map.Entry;
+import java.util.Map;
+
+import com.sk89q.jnbt.CompoundTag;
+import com.sk89q.jnbt.ListTag;
+import com.sk89q.jnbt.NBTUtils;
+import com.sk89q.jnbt.ShortTag;
+import com.sk89q.jnbt.StringTag;
+import com.sk89q.jnbt.Tag;
+import com.sk89q.worldedit.data.DataException;
 
 /**
- * Represents furnaces.
- *
+ * Represents a furnace block.
+ * 
  * @author sk89q
  */
-public class FurnaceBlock extends BaseBlock implements TileEntityBlock, ContainerBlock {
-    /**
-     * Store the list of items.
-     */
-    private BaseItemStack[] items;
+public class FurnaceBlock extends ContainerBlock {
 
-    /**
-     * Fuel time.
-     */
     private short burnTime;
-
-    /**
-     * Cook time.
-     */
     private short cookTime;
 
     /**
-     * Construct the chest block.
-     *
-     * @param type
+     * Construct an empty furnace block with the default orientation.
+     * 
+     * @param type type ID
      */
     public FurnaceBlock(int type) {
-        super(type);
-        items = new BaseItemStack[2];
+        super(type, 2);
     }
 
     /**
-     * Construct the chest block.
-     *
-     * @param type
-     * @param data
+     * Construct an empty furnace block with a given orientation.
+     * 
+     * @param type type ID
+     * @param data orientation
      */
     public FurnaceBlock(int type, int data) {
-        super(type, data);
-        items = new BaseItemStack[2];
+        super(type, data, 2);
     }
 
     /**
-     * Construct the chest block.
-     *
-     * @param type
-     * @param data
-     * @param items
+     * Construct an furnace block with a given orientation and inventory.
+     * 
+     * @param type type ID
+     * @param data orientation
+     * @param items inventory items
      */
     public FurnaceBlock(int type, int data, BaseItemStack[] items) {
-        super(type, data);
-        this.items = items;
+        super(type, data, 2);
+        setItems(items);
     }
 
     /**
-     * Get the list of items.
-     *
-     * @return
-     */
-    public BaseItemStack[] getItems() {
-        return items;
-    }
-
-    /**
-     * Set the list of items.
-     */
-    public void setItems(BaseItemStack[] items) {
-        this.items = items;
-    }
-
-    /**
-     * @return the burnTime
+     * Get the burn time.
+     * 
+     * @return the burn time
      */
     public short getBurnTime() {
         return burnTime;
     }
 
     /**
-     * @param burnTime the burnTime to set
+     * Set the burn time.
+     * 
+     * @param burnTime the burn time
      */
     public void setBurnTime(short burnTime) {
         this.burnTime = burnTime;
     }
 
     /**
-     * @return the cookTime
+     * Get the cook time.
+     * 
+     * @return the cook time
      */
     public short getCookTime() {
         return cookTime;
     }
 
     /**
-     * @param cookTime the cookTime to set
+     * Set the cook time.
+     * 
+     * @param cookTime the cook time to set
      */
     public void setCookTime(short cookTime) {
         this.cookTime = cookTime;
     }
 
-    /**
-     * Get the tile entity ID.
-     *
-     * @return
-     */
-    public String getTileEntityID() {
+    @Override
+    public String getNbtId() {
         return "Furnace";
     }
 
-    /**
-     * Store additional tile entity data. Returns true if the data is used.
-     *
-     * @return map of values
-     * @throws DataException
-     */
-    public Map<String, Tag> toTileEntityNBT()
-            throws DataException {
-        List<Tag> itemsList = new ArrayList<Tag>();
-        for (int i = 0; i < items.length; ++i) {
-            BaseItemStack item = items[i];
-            if (item != null) {
-                Map<String, Tag> data = new HashMap<String, Tag>();
-                CompoundTag itemTag = new CompoundTag("Items", data);
-                data.put("id", new ShortTag("id", (short) item.getType()));
-                data.put("Damage", new ShortTag("Damage", item.getDamage()));
-                data.put("Count", new ByteTag("Count", (byte) item.getAmount()));
-                data.put("Slot", new ByteTag("Slot", (byte) i));
-                if(item.getEnchantments().size() > 0) {
-                    Map<String, Tag> ench = new HashMap<String, Tag>();
-                    CompoundTag compound = new CompoundTag("tag", ench);
-                    List<Tag> list = new ArrayList<Tag>();
-                    ListTag enchlist = new ListTag("ench", CompoundTag.class, list);
-                    for(Entry<Integer, Integer> entry : item.getEnchantments().entrySet()) {
-                        Map<String, Tag> enchantment = new HashMap<String, Tag>();
-                        CompoundTag enchantcompound = new CompoundTag(null, enchantment);
-                        enchantment.put("id", new ShortTag("id", entry.getKey().shortValue()));
-                        enchantment.put("lvl", new ShortTag("lvl", entry.getValue().shortValue()));
-                        list.add(enchantcompound);
-                    }
-                    ench.put("ench", enchlist);
-                    data.put("tag", compound);
-                }
-                itemsList.add(itemTag);
-            }
-        }
+    @Override
+    public CompoundTag getNbtData() {
         Map<String, Tag> values = new HashMap<String, Tag>();
-        values.put("Items", new ListTag("Items", CompoundTag.class, itemsList));
+        values.put("Items", new ListTag("Items", CompoundTag.class,
+                serializeInventory(getItems())));
         values.put("BurnTime", new ShortTag("BurnTime", burnTime));
         values.put("CookTime", new ShortTag("CookTime", cookTime));
-        return values;
+        return new CompoundTag(getNbtId(), values);
     }
 
-    /**
-     * Get additional information from the title entity data.
-     *
-     * @param values
-     * @throws DataException
-     */
-    public void fromTileEntityNBT(Map<String, Tag> values)
-            throws DataException {
-        if (values == null) {
+    @Override
+    public void setNbtData(CompoundTag rootTag) throws DataException {
+        if (rootTag == null) {
             return;
         }
+        
+        Map<String, Tag> values = rootTag.getValue();
 
         Tag t = values.get("id");
-        if (!(t instanceof StringTag) || !((StringTag) t).getValue().equals("Furnace")) {
+        if (!(t instanceof StringTag)
+                || !((StringTag) t).getValue().equals("Furnace")) {
             throw new DataException("'Furnace' tile entity expected");
         }
 
-        ListTag items = (ListTag) Chunk.getChildTag(values, "Items", ListTag.class);
-        BaseItemStack[] newItems = new BaseItemStack[3];
+        ListTag items = NBTUtils.getChildTag(values, "Items", ListTag.class);
+
+        List<CompoundTag> compound = new ArrayList<CompoundTag>();
 
         for (Tag tag : items.getValue()) {
             if (!(tag instanceof CompoundTag)) {
-                throw new DataException("CompoundTag expected as child tag of Trap Items");
+                throw new DataException(
+                        "CompoundTag expected as child tag of Furnace Items");
             }
-
-            CompoundTag item = (CompoundTag) tag;
-            Map<String, Tag> itemValues = item.getValue();
-
-            short id = Chunk.getChildTag(itemValues, "id", ShortTag.class).getValue();
-            short damage = Chunk.getChildTag(itemValues, "Damage", ShortTag.class).getValue();
-            byte count = Chunk.getChildTag(itemValues, "Count", ByteTag.class).getValue();
-            byte slot = Chunk.getChildTag(itemValues, "Slot", ByteTag.class).getValue();
-
-            if (slot >= 0 && slot <= 2) {
-                BaseItemStack itemstack = new BaseItemStack(id, count, damage);
-
-                if(itemValues.containsKey("tag")) {
-                    ListTag ench = (ListTag) Chunk.getChildTag(itemValues, "tag", CompoundTag.class).getValue().get("ench");
-                    for(Tag e : ench.getValue()) {
-                        Map<String, Tag> vars = ((CompoundTag) e).getValue();
-                        short enchid = Chunk.getChildTag(vars, "id", ShortTag.class).getValue();
-                        short enchlvl = Chunk.getChildTag(vars, "lvl", ShortTag.class).getValue();
-                        itemstack.getEnchantments().put((int) enchid, (int)enchlvl);
-                    }
-                }
-
-                newItems[slot] = itemstack;
-            }
+            compound.add((CompoundTag) tag);
         }
-
-        this.items = newItems;
+        setItems(deserializeInventory(compound));
 
         t = values.get("BurnTime");
         if (t instanceof ShortTag) {

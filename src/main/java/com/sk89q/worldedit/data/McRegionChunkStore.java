@@ -42,7 +42,7 @@ public abstract class McRegionChunkStore extends ChunkStore {
         int x = pos.getBlockX();
         int z = pos.getBlockZ();
 
-        String filename = "r." + (x >> 5) + "." + (z >> 5) + ".mcr";
+        String filename = "r." + (x >> 5) + "." + (z >> 5) + ".mca";
 
         return filename;
     }
@@ -104,7 +104,7 @@ public abstract class McRegionChunkStore extends ChunkStore {
 
             return rootTag;
         } finally {
-            stream.close();
+            nbt.close();
         }
     }
 
