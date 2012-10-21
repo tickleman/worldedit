@@ -32,6 +32,7 @@ public class KeywordToken extends Token {
         this.value = value;
     }
 
+    @Override
     public char id() {
         return 'k';
     }

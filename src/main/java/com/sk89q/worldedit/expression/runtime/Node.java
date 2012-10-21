@@ -38,6 +38,7 @@ public abstract class Node implements RValue {
         return this;
     }
 
+    @Override
     public final int getPosition() {
         return position;
     }

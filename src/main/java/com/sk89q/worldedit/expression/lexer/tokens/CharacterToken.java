@@ -32,6 +32,7 @@ public class CharacterToken extends Token {
         this.character = character;
     }
 
+    @Override
     public char id() {
         return character;
     }

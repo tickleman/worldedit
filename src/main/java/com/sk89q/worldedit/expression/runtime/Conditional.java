@@ -37,6 +37,7 @@ public class Conditional extends Node {
         this.falsePart = falsePart;
     }
 
+    @Override
     public double getValue() throws EvaluationException {
         if (condition.getValue() > 0.0) {
             return truePart.getValue();
@@ -45,6 +46,7 @@ public class Conditional extends Node {
         }
     }
 
+    @Override
     public char id() {
         return 'I';
     }

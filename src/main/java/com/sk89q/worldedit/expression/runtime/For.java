@@ -39,6 +39,7 @@ public class For extends Node {
         this.body = body;
     }
 
+    @Override
     public double getValue() throws EvaluationException {
         int iterations = 0;
         double ret = 0.0;
@@ -63,6 +64,7 @@ public class For extends Node {
         return ret;
     }
 
+    @Override
     public char id() {
         return 'F';
     }

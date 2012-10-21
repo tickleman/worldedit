@@ -33,8 +33,10 @@ public abstract class PseudoToken implements Identifiable {
         this.position = position;
     }
 
+    @Override
     public abstract char id();
 
+    @Override
     public int getPosition() {
         return position;
     }

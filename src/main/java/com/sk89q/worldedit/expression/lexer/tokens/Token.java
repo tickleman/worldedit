@@ -33,6 +33,7 @@ public abstract class Token implements Identifiable {
         this.position = position;
     }
 
+    @Override
     public int getPosition() {
         return position;
     }

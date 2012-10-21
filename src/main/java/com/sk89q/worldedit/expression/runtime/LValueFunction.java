@@ -43,6 +43,7 @@ public class LValueFunction extends Function implements LValue {
         return 'l';
     }
 
+    @Override
     public double assign(double value) throws EvaluationException {
         setterArgs[setterArgs.length - 1] = value;
         return invokeMethod(setter, setterArgs);

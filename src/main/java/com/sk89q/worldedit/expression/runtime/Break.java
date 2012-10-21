@@ -33,10 +33,12 @@ public class Break extends Node {
         this.doContinue = doContinue;
     }
 
+    @Override
     public double getValue() throws EvaluationException {
         throw new BreakException(doContinue);
     }
 
+    @Override
     public char id() {
         return 'b';
     }

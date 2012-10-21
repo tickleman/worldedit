@@ -32,6 +32,7 @@ public final class Variable extends Node implements LValue {
         this.value = value;
     }
 
+    @Override
     public double getValue() {
         return value;
     }
@@ -41,10 +42,12 @@ public final class Variable extends Node implements LValue {
         return "var";
     }
 
+    @Override
     public char id() {
         return 'v';
     }
 
+    @Override
     public double assign(double value) {
         return this.value = value;
     }

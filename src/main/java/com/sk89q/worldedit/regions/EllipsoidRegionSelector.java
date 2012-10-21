@@ -181,6 +181,7 @@ public class EllipsoidRegionSelector implements RegionSelector, CUIRegion {
         return "ellipsoid";
     }
 
+    @Override
     public BlockVector getPrimaryPosition() throws IncompleteRegionException {
         return region.getCenter().toBlockVector();
     }

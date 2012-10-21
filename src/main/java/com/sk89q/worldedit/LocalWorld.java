@@ -409,6 +409,7 @@ public abstract class LocalWorld {
             playEffect(position, 2001, blockId);
         }
 
+        @Override
         public int compareTo(QueuedEffect other) {
             return Double.compare(priority, other.priority);
         }
