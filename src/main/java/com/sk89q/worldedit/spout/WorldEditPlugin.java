@@ -1,7 +1,6 @@
-// $Id$
 /*
  * WorldEdit
- * Copyright (C) 2010 sk89q <http://www.sk89q.com> and contributors
+ * Copyright (C) 2012 sk89q <http://www.sk89q.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +14,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
+
+// $Id$
+
 
 package com.sk89q.worldedit.spout;
 
@@ -30,32 +32,28 @@ import com.sk89q.worldedit.spout.selections.CuboidSelection;
 import com.sk89q.worldedit.spout.selections.Polygonal2DSelection;
 import com.sk89q.worldedit.spout.selections.Selection;
 import com.sk89q.worldedit.util.YAMLConfiguration;
+import org.spout.api.Server;
 import org.spout.api.command.CommandSource;
 import org.spout.api.geo.World;
-import org.spout.api.player.Player;
+import org.spout.api.entity.Player;
 import org.spout.api.plugin.CommonPlugin;
-import org.spout.api.util.Named;
+import org.spout.api.protocol.Protocol;
+import org.spout.api.scheduler.TaskPriority;
 
 import java.io.*;
 import java.util.jar.JarFile;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 
 /**
  * Plugin for Spout.
- * 
+ *
  * @author sk89q
  */
-public class WorldEditPlugin extends CommonPlugin implements Named {
-    /**
-     * WorldEdit messages get sent here.
-     */
-    private static final Logger logger = Logger.getLogger("Minecraft.WorldEdit");
-
+public class WorldEditPlugin extends CommonPlugin {
     /**
      * The server interface that all server-related API goes through.
      */
-    private ServerInterface server;
+    private SpoutServerInterface server;
     /**
      * Main WorldEdit instance.
      */
@@ -78,7 +76,7 @@ public class WorldEditPlugin extends CommonPlugin implements Named {
         final String pluginYmlVersion = getDescription().getVersion();
         final String manifestVersion = WorldEdit.getVersion();
 
-        logger.info("WorldEdit " + pluginYmlVersion + " enabled.");
+        getLogger().info("WorldEdit " + pluginYmlVersion + " enabled.");
         if (!manifestVersion.equalsIgnoreCase(pluginYmlVersion)) {
             WorldEdit.setVersion(manifestVersion + " (" + pluginYmlVersion + ")");
         }
@@ -91,35 +89,41 @@ public class WorldEditPlugin extends CommonPlugin implements Named {
 
         // Set up configuration and such, including the permissions
         // resolver
-        config = new YAMLConfiguration(new YAMLProcessor(new File(getDataFolder(), "config.yml"), true), logger);
+        config = new SpoutConfiguration(new YAMLProcessor(new File(getDataFolder(), "config.yml"), true), this);
 
         // Load the configuration
         loadConfiguration();
 
         // Setup interfaces
-        server = new SpoutServerInterface(this, getGame());
+        server = new SpoutServerInterface(this, getEngine());
         controller = new WorldEdit(server, config);
 
         // Now we can register events!
         registerEvents();
 
-        getGame().getScheduler().scheduleAsyncRepeatingTask(this,
-                new SessionTimer(controller, getGame()), 120, 120);
+        for (Protocol proto : Protocol.getProtocols()) {
+            proto.registerPacket(WorldEditCUICodec.class, new WorldEditCUIMessageHandler(this));
+        }
+
+        getEngine().getScheduler().scheduleAsyncRepeatingTask(this,
+                new SessionTimer(controller, getServer()), 6 * 1000, 6 * 1000, TaskPriority.LOWEST);
+    }
+
+    public Server getServer() {
+        if (!(getEngine() instanceof Server)) {
+            throw new IllegalStateException("WorldEdit must be running on a server for this operation!");
+        }
+
+        return (Server) getEngine();
     }
 
     /**
      * Called on plugin disable.
      */
     public void onDisable() {
-        for (Player player : getGame().getOnlinePlayers()) {
-            LocalPlayer lPlayer = wrapPlayer(player);
-            if (controller.getSession(lPlayer).hasCUISupport()) {
-                lPlayer.dispatchCUIHandshake();
-            }
-        }
         controller.clearSessions();
         config.unload();
-        getGame().getScheduler().cancelTasks(this);
+        getEngine().getScheduler().cancelTasks(this);
     }
 
     /**
@@ -134,7 +138,7 @@ public class WorldEditPlugin extends CommonPlugin implements Named {
      * Register the events used by WorldEdit.
      */
     protected void registerEvents() {
-        getGame().getEventManager().registerEvents(new WorldEditPlayerListener(this), this);
+        getEngine().getEventManager().registerEvents(new WorldEditListener(this), this);
     }
 
     /**
@@ -153,7 +157,7 @@ public class WorldEditPlugin extends CommonPlugin implements Named {
                 if (copy == null) throw new FileNotFoundException();
                 input = file.getInputStream(copy);
             } catch (IOException e) {
-                logger.severe(getDescription().getName() + ": Unable to read default configuration: " + name);
+                getLogger().severe("Unable to read default configuration: " + name);
             }
             if (input != null) {
                 FileOutputStream output = null;
@@ -166,22 +170,19 @@ public class WorldEditPlugin extends CommonPlugin implements Named {
                         output.write(buf, 0, length);
                     }
 
-                    logger.info(getDescription().getName()
-                            + ": Default configuration file written: " + name);
+                    getLogger().info("Default configuration file written: " + name);
                 } catch (IOException e) {
                     e.printStackTrace();
                 } finally {
                     try {
-                        if (input != null) {
-                            input.close();
-                        }
-                    } catch (IOException e) {}
+                        input.close();
+                    } catch (IOException ignore) {}
 
                     try {
                         if (output != null) {
                             output.close();
                         }
-                    } catch (IOException e) {}
+                    } catch (IOException ignore) {}
                 }
             }
         }
@@ -283,7 +284,7 @@ public class WorldEditPlugin extends CommonPlugin implements Named {
      *
      * @return
      */
-    public ServerInterface getServerInterface() {
+    public SpoutServerInterface getServerInterface() {
         return server;
     }
 
@@ -311,7 +312,7 @@ public class WorldEditPlugin extends CommonPlugin implements Named {
         }
 
         LocalSession session = controller.getSession(wrapPlayer(player));
-        RegionSelector selector = session.getRegionSelector(SpoutUtil.getLocalWorld(player.getEntity().getPoint().getWorld()));
+        RegionSelector selector = session.getRegionSelector(SpoutUtil.getLocalWorld(player.getWorld()));
 
         try {
             Region region = selector.getRegion();
@@ -331,7 +332,7 @@ public class WorldEditPlugin extends CommonPlugin implements Named {
 
     /**
      * Sets the region selection for a player.
-     * 
+     *
      * @param player
      * @param selection
      */
@@ -348,13 +349,8 @@ public class WorldEditPlugin extends CommonPlugin implements Named {
 
         LocalSession session = controller.getSession(wrapPlayer(player));
         RegionSelector sel = selection.getRegionSelector();
-        session.setRegionSelector(SpoutUtil.getLocalWorld(player.getEntity().getPoint().getWorld()), sel);
+        session.setRegionSelector(SpoutUtil.getLocalWorld(player.getWorld()), sel);
         session.dispatchCUISelection(wrapPlayer(player));
-    }
-
-    @Override
-    public String getName() {
-        return getDescription().getName();
     }
 
     static WorldEditPlugin getInstance() {

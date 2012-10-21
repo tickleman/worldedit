@@ -19,15 +19,25 @@
 
 package com.sk89q.worldedit.snapshots;
 
-import com.sk89q.worldedit.*;
-import com.sk89q.worldedit.regions.*;
-import com.sk89q.worldedit.blocks.*;
-import com.sk89q.worldedit.data.*;
 import java.io.IOException;
-import java.util.Map;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.ArrayList;
+import java.util.Map;
+
+import com.sk89q.worldedit.BlockVector2D;
+import com.sk89q.worldedit.EditSession;
+import com.sk89q.worldedit.MaxChangedBlocksException;
+import com.sk89q.worldedit.Vector;
+import com.sk89q.worldedit.Vector2D;
+import com.sk89q.worldedit.blocks.BaseBlock;
+import com.sk89q.worldedit.data.Chunk;
+import com.sk89q.worldedit.data.ChunkStore;
+import com.sk89q.worldedit.data.DataException;
+import com.sk89q.worldedit.data.MissingChunkException;
+import com.sk89q.worldedit.data.MissingWorldException;
+import com.sk89q.worldedit.regions.CuboidRegion;
+import com.sk89q.worldedit.regions.Region;
 
 /**
  *
@@ -153,7 +163,7 @@ public class SnapshotRestore {
                 // Now just copy blocks!
                 for (Vector pos : entry.getValue()) {
                     BaseBlock block = chunk.getBlock(pos);
-                    editSession.setBlock(pos, block);
+                    editSession.rawSetBlock(pos, block);
                 }
             } catch (MissingChunkException me) {
                 missingChunks.add(chunkPos);

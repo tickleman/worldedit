@@ -129,19 +129,11 @@ public class BukkitPlayer extends LocalPlayer {
     @Override
     public void dispatchCUIEvent(CUIEvent event) {
         String[] params = event.getParameters();
-
+        String send = event.getTypeId();
         if (params.length > 0) {
-            player.sendRawMessage("\u00A75\u00A76\u00A74\u00A75" + event.getTypeId()
-                    + "|" + StringUtil.joinString(params, "|"));
-        } else {
-            player.sendRawMessage("\u00A75\u00A76\u00A74\u00A75" + event.getTypeId());
+            send = send + "|" + StringUtil.joinString(params, "|");
         }
-    }
-
-    @Override
-    public void dispatchCUIHandshake() {
-        player.sendRawMessage("\u00A75\u00A76\u00A74\u00A75");
-        player.sendRawMessage("\u00A74\u00A75\u00A73\u00A74");
+        player.sendPluginMessage(plugin, WorldEditPlugin.CUI_PLUGIN_CHANNEL, send.getBytes(CUIChannelListener.UTF_8_CHARSET));
     }
 
     public Player getPlayer() {

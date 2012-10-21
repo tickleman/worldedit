@@ -1,7 +1,6 @@
-// $Id$
 /*
  * WorldEdit
- * Copyright (C) 2010 sk89q <http://www.sk89q.com> and contributors
+ * Copyright (C) 2012 sk89q <http://www.sk89q.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,22 +14,29 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
+
+// $Id$
+
 
 package com.sk89q.worldedit.spout;
 
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldedit.BlockWorldVector;
 import com.sk89q.worldedit.LocalWorld;
+import com.sk89q.worldedit.Location;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.WorldVector;
-import org.spout.api.Game;
+import org.spout.api.Engine;
+import org.spout.api.Server;
+import org.spout.api.entity.Entity;
 import org.spout.api.geo.World;
 import org.spout.api.geo.cuboid.Block;
 import org.spout.api.geo.discrete.Point;
 import org.spout.api.material.block.BlockFace;
+import org.spout.api.math.MathHelper;
 import org.spout.api.math.Vector3;
-import org.spout.api.player.Player;
+import org.spout.api.entity.Player;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,7 +63,7 @@ public class SpoutUtil {
     public static BlockVector toVector(BlockFace face) {
         return toBlockVector(face.getOffset());
     }
-    
+
     public static BlockVector toBlockVector(Vector3 vector) {
         return new BlockVector(vector.getX(), vector.getY(), vector.getZ());
     }
@@ -85,21 +91,25 @@ public class SpoutUtil {
     public static Point center(Point loc) {
         return new Point(
                 loc.getWorld(),
-                loc.getX() + 0.5F,
-                loc.getY() + 0.5F,
-                loc.getZ() + 0.5F
+                MathHelper.floor(loc.getX()) + 0.5F,
+                MathHelper.floor(loc.getY()) + 0.5F,
+                MathHelper.floor(loc.getZ()) + 0.5F
         );
     }
 
-    public static Player matchSinglePlayer(Game game, String name) {
-        return game.getPlayer(name, false);
+    public static Player matchSinglePlayer(Engine game, String name) {
+        return game instanceof Server ? ((Server) game).getPlayer(name, false) : null;
     }
 
     public static Block toBlock(BlockWorldVector pt) {
-        return toWorld(pt).getBlock(pt.getBlockX(), pt.getBlockY(), pt.getBlockZ());
+        return toWorld(pt).getBlock(pt.getBlockX(), pt.getBlockY(), pt.getBlockZ(), WorldEditPlugin.getInstance());
     }
 
     public static World toWorld(WorldVector pt) {
         return ((SpoutWorld) pt.getWorld()).getWorld();
+    }
+
+    public static Location toLocation(Entity ent) {
+        return new Location(getLocalWorld(ent.getWorld()), toVector(ent.getTransform().getPosition()), ent.getTransform().getYaw(), ent.getTransform().getPitch());
     }
 }

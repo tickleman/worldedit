@@ -1,7 +1,6 @@
-// $Id$
 /*
  * WorldEdit
- * Copyright (C) 2010 sk89q <http://www.sk89q.com> and contributors
+ * Copyright (C) 2012 sk89q <http://www.sk89q.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,21 +14,57 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
+ */
+
+// $Id$
+
 
 package com.sk89q.worldedit.spout;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.sk89q.worldedit.BiomeType;
 import com.sk89q.worldedit.BlockVector2D;
 import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.EntityType;
+import com.sk89q.worldedit.LocalEntity;
 import com.sk89q.worldedit.LocalWorld;
+import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.Vector;
+import com.sk89q.worldedit.Vector2D;
 import com.sk89q.worldedit.blocks.BaseBlock;
 import com.sk89q.worldedit.blocks.BaseItemStack;
 import com.sk89q.worldedit.regions.Region;
 
+import com.sk89q.worldedit.util.TreeGenerator;
+import org.spout.api.component.Component;
+import org.spout.api.entity.Entity;
+import org.spout.api.generator.biome.BiomeGenerator;
+import org.spout.api.geo.LoadOption;
 import org.spout.api.geo.World;
-import org.spout.api.material.MaterialData;
+import org.spout.api.geo.cuboid.Chunk;
+import org.spout.api.inventory.ItemStack;
+import org.spout.api.material.BlockMaterial;
+import org.spout.api.material.Material;
+import org.spout.api.math.Vector3;
+import org.spout.vanilla.component.substance.Item;
+import org.spout.vanilla.component.substance.Painting;
+import org.spout.vanilla.component.substance.XPOrb;
+import org.spout.vanilla.component.substance.object.Tnt;
+import org.spout.vanilla.component.substance.object.projectile.Arrow;
+import org.spout.vanilla.component.substance.object.vehicle.Boat;
+import org.spout.vanilla.component.substance.object.vehicle.Minecart;
+import org.spout.vanilla.material.VanillaMaterial;
+import org.spout.vanilla.material.VanillaMaterials;
+import org.spout.vanilla.world.generator.normal.object.tree.TreeObject;
+import org.spout.vanilla.world.generator.normal.object.tree.SmallTreeObject;
+
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class SpoutWorld extends LocalWorld {
     private World world;
@@ -44,7 +79,7 @@ public class SpoutWorld extends LocalWorld {
 
     /**
      * Get the world handle.
-     * 
+     *
      * @return
      */
     public World getWorld() {
@@ -53,7 +88,7 @@ public class SpoutWorld extends LocalWorld {
 
     /**
      * Get the name of the world
-     * 
+     *
      * @return
      */
     @Override
@@ -63,19 +98,26 @@ public class SpoutWorld extends LocalWorld {
 
     /**
      * Set block type.
-     * 
+     *
      * @param pt
      * @param type
      * @return
      */
     @Override
     public boolean setBlockType(Vector pt, int type) {
-        return world.setBlockId(pt.getBlockX(), pt.getBlockY(), pt.getBlockZ(), (short)type, WorldEditPlugin.getInstance());
+        Material mat = VanillaMaterials.getMaterial((short) type);
+        if (mat != null && mat instanceof BlockMaterial) {
+            final int x = pt.getBlockX();
+            final int y = pt.getBlockY();
+            final int z = pt.getBlockZ();
+            return world.getChunkFromBlock(x, y, z, LoadOption.LOAD_GEN).setBlockMaterial(x, y, z, (BlockMaterial) mat, (short) 0, WorldEditPlugin.getInstance());
+        }
+        return false;
     }
 
     /**
      * Set block type.
-     * 
+     *
      * @param pt
      * @param type
      * @return
@@ -90,11 +132,18 @@ public class SpoutWorld extends LocalWorld {
      * @param pt
      * @param type
      * @param data
-     * @return 
+     * @return
      */
     @Override
     public boolean setTypeIdAndData(Vector pt, int type, int data) {
-        return world.setBlockIdAndData(pt.getBlockX(), pt.getBlockY(), pt.getBlockZ(), (short) type, (short) data, WorldEditPlugin.getInstance());
+        Material mat = VanillaMaterials.getMaterial((short) type, (short) data);
+        if (mat != null && mat instanceof BlockMaterial) {
+            final int x = pt.getBlockX();
+            final int y = pt.getBlockY();
+            final int z = pt.getBlockZ();
+            return world.getChunkFromBlock(x, y, z, LoadOption.LOAD_GEN).setBlockMaterial(x, y, z, (BlockMaterial) mat, (short) data, WorldEditPlugin.getInstance());
+        }
+        return false;
     }
 
     /**
@@ -103,7 +152,7 @@ public class SpoutWorld extends LocalWorld {
      * @param pt
      * @param type
      * @param data
-     * @return 
+     * @return
      */
     @Override
     public boolean setTypeIdAndDataFast(Vector pt, int type, int data) {
@@ -112,29 +161,36 @@ public class SpoutWorld extends LocalWorld {
 
     /**
      * Get block type.
-     * 
+     *
      * @param pt
      * @return
      */
     @Override
     public int getBlockType(Vector pt) {
-        return world.getBlockId(pt.getBlockX(), pt.getBlockY(), pt.getBlockZ());
+        final int x = pt.getBlockX();
+        final int y = pt.getBlockY();
+        final int z = pt.getBlockZ();
+        Material mat =  world.getChunkFromBlock(x, y, z, LoadOption.LOAD_GEN).getBlockMaterial(x, y, z);
+        return mat instanceof VanillaMaterial ? ((VanillaMaterial) mat).getMinecraftId() : 0;
     }
 
     /**
      * Set block data.
-     * 
+     *
      * @param pt
      * @param data
      */
     @Override
     public void setBlockData(Vector pt, int data) {
-        setTypeIdAndData(pt, world.getBlockId(pt.getBlockX(), pt.getBlockY(), pt.getBlockZ()), data);
+        final int x = pt.getBlockX();
+        final int y = pt.getBlockY();
+        final int z = pt.getBlockZ();
+        world.getChunkFromBlock(x, y, z, LoadOption.LOAD_GEN).setBlockData(x, y, z, (short) data, WorldEditPlugin.getInstance());
     }
 
     /**
      * Set block data.
-     * 
+     *
      * @param pt
      * @param data
      */
@@ -145,29 +201,58 @@ public class SpoutWorld extends LocalWorld {
 
     /**
      * Get block data.
-     * 
+     *
      * @param pt
      * @return
      */
     @Override
     public int getBlockData(Vector pt) {
-        return world.getBlockData(pt.getBlockX(), pt.getBlockY(), pt.getBlockZ());
+        final int x = pt.getBlockX();
+        final int y = pt.getBlockY();
+        final int z = pt.getBlockZ();
+        return world.getChunkFromBlock(x, y, z, LoadOption.LOAD_GEN).getBlockData(x, y, z);
     }
 
     /**
      * Get block light level.
-     * 
+     *
      * @param pt
      * @return
      */
     @Override
     public int getBlockLightLevel(Vector pt) {
-        return world.getBlockMaterial(pt.getBlockX(), pt.getBlockY(), pt.getBlockZ()).getLightLevel();
+        final int x = pt.getBlockX();
+        final int y = pt.getBlockY();
+        final int z = pt.getBlockZ();
+        return world.getChunkFromBlock(x, y, z, LoadOption.LOAD_GEN).getBlockLight(x, y, z);
+    }
+
+    /**
+     * Get biome type
+     *
+     * @param pt
+     * @return
+     */
+    public BiomeType getBiome(Vector2D pt) {
+        if (world.getGenerator() instanceof BiomeGenerator) {
+            BiomeGenerator gen = (BiomeGenerator) world.getGenerator();
+            return new SpoutBiomeType(gen.getBiome(pt.getBlockX(), pt.getBlockZ(), world.getSeed()));
+        }
+        return BiomeType.UNKNOWN;
+    }
+
+    public void setBiome(Vector2D pt, BiomeType biome) {
+        if (biome instanceof SpoutBiomeType &&
+                world.getGenerator() instanceof BiomeGenerator) {
+            throw new UnsupportedOperationException("Biome changing is not yet supported in Spout");
+            //BiomeGenerator gen = (BiomeGenerator) world.getGenerator();
+            //gen.setBiome(new Vector3(pt.getBlockX(), 0, pt.getBlockZ()), ((SpoutBiomeType) biome).getSpoutBiome());
+        }
     }
 
     /**
      * Regenerate an area.
-     * 
+     *
      * @param region
      * @param editSession
      * @return
@@ -196,7 +281,7 @@ public class SpoutWorld extends LocalWorld {
                 t.printStackTrace();
             }
 
-            // Then restore 
+            // Then restore
             for (int x = 0; x < 16; ++x) {
                 for (int y = 0; y < (getMaxY() + 1); ++y) {
                     for (int z = 0; z < 16; ++z) {
@@ -221,7 +306,7 @@ public class SpoutWorld extends LocalWorld {
 
     /**
      * Attempts to accurately copy a BaseBlock's extra data to the world.
-     * 
+     *
      * @param pt
      * @param block
      * @return
@@ -282,7 +367,7 @@ public class SpoutWorld extends LocalWorld {
 
     /**
      * Attempts to read a BaseBlock's extra data from the world.
-     * 
+     *
      * @param pt
      * @param block
      * @return
@@ -344,7 +429,7 @@ public class SpoutWorld extends LocalWorld {
 
     /**
      * Clear a chest's contents.
-     * 
+     *
      * @param pt
      */
     @Override
@@ -365,69 +450,15 @@ public class SpoutWorld extends LocalWorld {
         return false;
     }
 
-    /**
-     * Generate a tree at a location.
-     * 
-     * @param pt
-     * @return
-     */
     @Override
-    public boolean generateTree(EditSession editSession, Vector pt) {
-        /*return world.generateTree(SpoutUtil.toLocation(world, pt), TreeType.TREE,
-                new EditSessionBlockChangeDelegate(editSession));*/
-        return false;
-    }
-
-    /**
-     * Generate a big tree at a location.
-     *
-     * @param pt
-     * @return
-     */
-    @Override
-    public boolean generateBigTree(EditSession editSession, Vector pt) {
-        /*return world.generateTree(SpoutUtil.toLocation(world, pt), TreeType.BIG_TREE,
-                new EditSessionBlockChangeDelegate(editSession));*/
-        return false;
-    }
-
-    /**
-     * Generate a birch tree at a location.
-     *
-     * @param pt
-     * @return
-     */
-    @Override
-    public boolean generateBirchTree(EditSession editSession, Vector pt) {
-        /*return world.generateTree(SpoutUtil.toLocation(world, pt), TreeType.BIRCH,
-                new EditSessionBlockChangeDelegate(editSession));*/
-        return false;
-    }
-
-    /**
-     * Generate a redwood tree at a location.
-     *
-     * @param pt
-     * @return
-     */
-    @Override
-    public boolean generateRedwoodTree(EditSession editSession, Vector pt) {
-        /*return world.generateTree(SpoutUtil.toLocation(world, pt), TreeType.REDWOOD,
-                new EditSessionBlockChangeDelegate(editSession));*/
-        return false;
-    }
-
-    /**
-     * Generate a redwood tree at a location.
-     *
-     * @param pt
-     * @return
-     */
-    @Override
-    public boolean generateTallRedwoodTree(EditSession editSession, Vector pt) {
-        /*return world.generateTree(SpoutUtil.toLocation(world, pt), TreeType.TALL_REDWOOD,
-                new EditSessionBlockChangeDelegate(editSession));*/
-        return false;
+    public boolean generateTree(TreeGenerator.TreeType type, EditSession editSession, Vector pt)
+            throws MaxChangedBlocksException {
+        TreeObject tree = new SmallTreeObject(); //TODO: properly check for tree type
+        if (!tree.canPlaceObject(world, pt.getBlockX(), pt.getBlockY(), pt.getBlockZ())) {
+            return false;
+        }
+        tree.placeObject(world, pt.getBlockX(), pt.getBlockY(), pt.getBlockZ());
+        return true;
     }
 
     /**
@@ -438,10 +469,12 @@ public class SpoutWorld extends LocalWorld {
      */
     @Override
     public void dropItem(Vector pt, BaseItemStack item) {
-        /*ItemStack bukkitItem = new ItemStack(item.getType(), item.getAmount(),
-                (byte) item.getDamage());
-        world.dropItemNaturally(SpoutUtil.toLocation(world, pt), bukkitItem);*/
-
+        Material mat = VanillaMaterials.getMaterial((short) item.getType());
+        if (mat.hasSubMaterials()) {
+            mat = mat.getSubMaterial(item.getData());
+        }
+        ItemStack spoutItem = new ItemStack(mat, item.getData(), item.getAmount());
+        world.createEntity(SpoutUtil.toPoint(world, pt), Item.class).get(Item.class).setItemStack(spoutItem);
     }
 
     /**
@@ -463,7 +496,7 @@ public class SpoutWorld extends LocalWorld {
 
         Point bukkitOrigin = SpoutUtil.toPoint(world, origin);
 
-        
+
         for (LivingEntity ent : world.getLivingEntities()) {
             if (ent instanceof HumanEntity) {
                 continue;
@@ -503,58 +536,58 @@ public class SpoutWorld extends LocalWorld {
     @Override
     public int removeEntities(EntityType type, Vector origin, int radius) {
         int num = 0;
-        /*double radiusSq = radius * radius;
+        double radiusSq = radius * radius;
 
-        for (Entity ent : world.getEntities()) {
+        for (Entity ent : world.getAll()) {
             if (radius != -1
                     && origin.distanceSq(SpoutUtil.toVector(ent.getTransform().getPosition())) > radiusSq) {
                 continue;
             }
-            
+
             if (type == EntityType.ARROWS) {
-                if (ent instanceof Arrow) {
+                if (ent.has(Arrow.class)) {
                     ent.remove();
                     ++num;
                 }
             } else if (type == EntityType.BOATS) {
-                if (ent instanceof Boat) {
+                if (ent.has(Boat.class)) {
                     ent.remove();
                     ++num;
                 }
             } else if (type == EntityType.ITEMS) {
-                if (ent instanceof Item) {
+                if (ent.has(Item.class)) {
                     ent.remove();
                     ++num;
                 }
             } else if (type == EntityType.MINECARTS) {
-                if (ent instanceof Minecart) {
+                if (ent.has(Minecart.class)) {
                     ent.remove();
                     ++num;
                 }
             } else if (type == EntityType.PAINTINGS) {
-                if (ent instanceof Painting) {
+                if (ent.has(Painting.class)) {
                     ent.remove();
                     ++num;
                 }
             } else if (type == EntityType.TNT) {
-                if (ent instanceof TNTPrimed) {
+                if (ent.has(Tnt.class)) {
                     ent.remove();
                     ++num;
                 }
             } else if (type == EntityType.XP_ORBS) {
-                if (ent instanceof ExperienceOrb) {
+                if (ent.has(XPOrb.class)) {
                     ent.remove();
                     ++num;
                 }
             }
-        }*/
+        }
 
         return num;
     }
 
     /**
      * Set a sign's text.
-     * 
+     *
      * @param pt
      * @param text
      * @return
@@ -575,7 +608,7 @@ public class SpoutWorld extends LocalWorld {
 
     /**
      * Get a sign's text.
-     * 
+     *
      * @param pt
      * @return
      */
@@ -599,7 +632,7 @@ public class SpoutWorld extends LocalWorld {
 
     /**
      * Get a container block's contents.
-     * 
+     *
      * @param pt
      * @return
      */
@@ -638,7 +671,7 @@ public class SpoutWorld extends LocalWorld {
 
     /**
      * Set a container block's contents.
-     * 
+     *
      * @param pt
      * @param contents
      * @return
@@ -682,20 +715,17 @@ public class SpoutWorld extends LocalWorld {
 
     /**
      * Returns whether a block has a valid ID.
-     * 
+     *
      * @param type
      * @return
      */
     @Override
     public boolean isValidBlockType(int type) {
-        return MaterialData.getBlock((short)type) != null;
+        return VanillaMaterials.getMaterial((short)type) instanceof BlockMaterial;
     }
 
     @Override
     public void checkLoadedChunk(Vector pt) {
-        /*if (!world.isChunkLoaded(pt.getBlockX() >> 4, pt.getBlockZ() >> 4)) {
-            world.loadChunk(pt.getBlockX() >> 4, pt.getBlockZ() >> 4);
-        }*/
     }
 
     @Override
@@ -743,5 +773,42 @@ public class SpoutWorld extends LocalWorld {
         return true;
         */
         return false;
+    }
+
+    @Override
+    public SpoutEntity[] getEntities(Region region) {
+        List<SpoutEntity> entities = new ArrayList<SpoutEntity>();
+        for (Vector pt : region.getChunkCubes()) {
+            Chunk chunk = world.getChunkFromBlock(pt.getBlockX(), pt.getBlockY(), pt.getBlockZ(), LoadOption.LOAD_GEN);
+            if (chunk == null) {
+                continue;
+            }
+            for (Entity ent : chunk.getEntities()) {
+                if (region.contains(SpoutUtil.toVector(ent.getTransform().getPosition()))) {
+                    Collection<Class<? extends Component>> revisedComponents = Collections2.transform(ent.values(), new Function<Component, Class<? extends Component>>() {
+                        @Override
+                        public Class<? extends Component> apply(@Nullable Component component) {
+                            return component == null ? null : component.getClass();
+                        }
+                    });
+                    entities.add(new SpoutEntity(SpoutUtil.toLocation(ent), ent.getId(), revisedComponents, ent.getData().getBaseMap())); // TODO:; Fix entity adding
+                }
+            }
+        }
+        return entities.toArray(new SpoutEntity[entities.size()]);
+    }
+
+    @Override
+    public int killEntities(LocalEntity... entities) {
+        int amount = 0;
+        for (LocalEntity weEnt : entities) {
+            SpoutEntity entity = (SpoutEntity) weEnt;
+            Entity spoutEntity = world.getEntity(entity.getEntityId());
+            if (spoutEntity != null) {
+                spoutEntity.remove();
+                ++amount;
+            }
+        }
+        return amount;
     }
 }

@@ -19,12 +19,20 @@
 
 package com.sk89q.worldedit.commands;
 
+import static com.sk89q.minecraft.util.commands.Logging.LogMode.ALL;
+import static com.sk89q.minecraft.util.commands.Logging.LogMode.PLACEMENT;
+import static com.sk89q.minecraft.util.commands.Logging.LogMode.POSITION;
+
 import com.sk89q.minecraft.util.commands.Command;
 import com.sk89q.minecraft.util.commands.CommandContext;
 import com.sk89q.minecraft.util.commands.CommandPermissions;
 import com.sk89q.minecraft.util.commands.Logging;
-import static com.sk89q.minecraft.util.commands.Logging.LogMode.*;
-import com.sk89q.worldedit.*;
+import com.sk89q.worldedit.EditSession;
+import com.sk89q.worldedit.LocalPlayer;
+import com.sk89q.worldedit.LocalSession;
+import com.sk89q.worldedit.Vector;
+import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.WorldEditException;
 import com.sk89q.worldedit.expression.ExpressionException;
 import com.sk89q.worldedit.patterns.Pattern;
 import com.sk89q.worldedit.regions.Region;
@@ -237,6 +245,7 @@ public class GenerationCommands {
     )
     @CommandPermissions("worldedit.generation.forest")
     @Logging(POSITION)
+    @SuppressWarnings("deprecation")
     public void forestGen(CommandContext args, LocalSession session, LocalPlayer player,
             EditSession editSession) throws WorldEditException {
         
@@ -330,10 +339,11 @@ public class GenerationCommands {
             "  -h to generate a hollow shape\n" +
             "  -r to use raw minecraft coordinates\n" +
             "  -o is like -r, except offset from placement.\n" +
+            "  -c is like -r, except offset selection center.\n" +
             "If neither -r nor -o is given, the selection is mapped to -1..1\n" +
             "See also tinyurl.com/wesyntax.",
-        flags = "hro",
-        min = 1,
+        flags = "hroc",
+        min = 2,
         max = -1
     )
     @CommandPermissions("worldedit.generation.shape")
@@ -356,6 +366,12 @@ public class GenerationCommands {
             unit = new Vector(1, 1, 1);
         } else if (args.hasFlag('o')) {
             zero = session.getPlacementPosition(player);
+            unit = new Vector(1, 1, 1);
+        } else if (args.hasFlag('c')) {
+            final Vector min = region.getMinimumPoint();
+            final Vector max = region.getMaximumPoint();
+
+            zero = max.add(min).multiply(0.5);
             unit = new Vector(1, 1, 1);
         } else {
             final Vector min = region.getMinimumPoint();

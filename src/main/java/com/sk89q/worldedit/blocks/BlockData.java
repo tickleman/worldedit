@@ -73,11 +73,19 @@ public final class BlockData {
         case BlockID.BRICK_STAIRS:
         case BlockID.STONE_BRICK_STAIRS:
         case BlockID.NETHER_BRICK_STAIRS:
+        case BlockID.SANDSTONE_STAIRS:
+        case BlockID.SPRUCE_WOOD_STAIRS:
+        case BlockID.BIRCH_WOOD_STAIRS:
+        case BlockID.JUNGLE_WOOD_STAIRS:
             switch (data) {
             case 0: return 2;
             case 1: return 3;
             case 2: return 1;
             case 3: return 0;
+            case 4: return 6;
+            case 5: return 7;
+            case 6: return 5;
+            case 7: return 4;
             }
             break;
 
@@ -95,14 +103,15 @@ public final class BlockData {
 
         case BlockID.WOODEN_DOOR:
         case BlockID.IRON_DOOR:
-            int topHalf = data & 0x8;
-            int swung = data & 0x4;
-            int withoutFlags = data & ~(0x8 | 0x4);
+        case BlockID.COCOA_PLANT:
+        case BlockID.TRIPWIRE_HOOK:
+            int extra = data & ~0x3;
+            int withoutFlags = data & 0x3;
             switch (withoutFlags) {
-            case 0: return 1 | topHalf | swung;
-            case 1: return 2 | topHalf | swung;
-            case 2: return 3 | topHalf | swung;
-            case 3: return 0 | topHalf | swung;
+            case 0: return 1 | extra;
+            case 1: return 2 | extra;
+            case 2: return 3 | extra;
+            case 3: return 0 | extra;
             }
             break;
 
@@ -115,6 +124,7 @@ public final class BlockData {
         case BlockID.FURNACE:
         case BlockID.BURNING_FURNACE:
         case BlockID.DISPENSER:
+        case BlockID.ENDER_CHEST:
             switch (data) {
             case 2: return 5;
             case 3: return 4;
@@ -233,11 +243,19 @@ public final class BlockData {
         case BlockID.BRICK_STAIRS:
         case BlockID.STONE_BRICK_STAIRS:
         case BlockID.NETHER_BRICK_STAIRS:
+        case BlockID.SANDSTONE_STAIRS:
+        case BlockID.SPRUCE_WOOD_STAIRS:
+        case BlockID.BIRCH_WOOD_STAIRS:
+        case BlockID.JUNGLE_WOOD_STAIRS:
             switch (data) {
             case 2: return 0;
             case 3: return 1;
             case 1: return 2;
             case 0: return 3;
+            case 6: return 4;
+            case 7: return 5;
+            case 5: return 6;
+            case 4: return 7;
             }
             break;
 
@@ -255,14 +273,15 @@ public final class BlockData {
 
         case BlockID.WOODEN_DOOR:
         case BlockID.IRON_DOOR:
-            int topHalf = data & 0x8;
-            int swung = data & 0x4;
-            int withoutFlags = data & ~(0x8 | 0x4);
+        case BlockID.COCOA_PLANT:
+        case BlockID.TRIPWIRE_HOOK:
+            int extra = data & ~0x3;
+            int withoutFlags = data & 0x3;
             switch (withoutFlags) {
-            case 1: return 0 | topHalf | swung;
-            case 2: return 1 | topHalf | swung;
-            case 3: return 2 | topHalf | swung;
-            case 0: return 3 | topHalf | swung;
+            case 1: return 0 | extra;
+            case 2: return 1 | extra;
+            case 3: return 2 | extra;
+            case 0: return 3 | extra;
             }
             break;
 
@@ -275,6 +294,7 @@ public final class BlockData {
         case BlockID.FURNACE:
         case BlockID.BURNING_FURNACE:
         case BlockID.DISPENSER:
+        case BlockID.ENDER_CHEST:
             switch (data) {
             case 5: return 2;
             case 4: return 3;
@@ -421,17 +441,30 @@ public final class BlockData {
             }
             break;
 
+        case BlockID.STEP:
+        case BlockID.WOODEN_STEP:
+            return data ^ (flipY << 3);
+
         case BlockID.WOODEN_STAIRS:
         case BlockID.COBBLESTONE_STAIRS:
         case BlockID.BRICK_STAIRS:
         case BlockID.STONE_BRICK_STAIRS:
         case BlockID.NETHER_BRICK_STAIRS:
+        case BlockID.SANDSTONE_STAIRS:
+        case BlockID.SPRUCE_WOOD_STAIRS:
+        case BlockID.BIRCH_WOOD_STAIRS:
+        case BlockID.JUNGLE_WOOD_STAIRS:
+            data ^= flipY << 2;
             switch (data) {
             case 0:
             case 1:
+            case 4:
+            case 5:
                 return data ^ flipX;
             case 2:
             case 3:
+            case 6:
+            case 7:
                 return data ^ flipZ;
             }
             break;
@@ -462,6 +495,7 @@ public final class BlockData {
         case BlockID.FURNACE:
         case BlockID.BURNING_FURNACE:
         case BlockID.DISPENSER:
+        case BlockID.ENDER_CHEST:
             switch (data) {
             case 2:
             case 3:
@@ -479,6 +513,8 @@ public final class BlockData {
 
         case BlockID.REDSTONE_REPEATER_OFF:
         case BlockID.REDSTONE_REPEATER_ON:
+        case BlockID.COCOA_PLANT:
+        case BlockID.TRIPWIRE_HOOK:
             switch (data & 0x3) {
             case 0:
             case 2:
@@ -612,10 +648,19 @@ public final class BlockData {
         case BlockID.BRICK_STAIRS:
         case BlockID.STONE_BRICK_STAIRS:
         case BlockID.NETHER_BRICK_STAIRS:
+        case BlockID.SANDSTONE_STAIRS:
+        case BlockID.SPRUCE_WOOD_STAIRS:
+        case BlockID.BIRCH_WOOD_STAIRS:
+        case BlockID.JUNGLE_WOOD_STAIRS:
+            if (data > 7) return -1;
+            return mod((data + increment), 8);
+
         case BlockID.PUMPKIN:
         case BlockID.JACKOLANTERN:
         case BlockID.NETHER_WART:
         case BlockID.CAULDRON:
+        case BlockID.WOODEN_STEP:
+        case BlockID.DOUBLE_WOODEN_STEP:
             if (data > 3) return -1;
             return mod((data + increment), 4);
 
@@ -645,6 +690,7 @@ public final class BlockData {
         case BlockID.SIGN_POST:
         case BlockID.VINE:
         case BlockID.SNOW:
+        case BlockID.COCOA_PLANT:
             if (data > 15) return -1;
             return mod((data + increment), 16);
 
@@ -654,6 +700,7 @@ public final class BlockData {
         case BlockID.WALL_SIGN:
         case BlockID.LADDER:
         case BlockID.CHEST:
+        case BlockID.ENDER_CHEST:
             if (data < 2 || data > 5) return -1;
             return mod((data - 2 + increment), 4) + 2;
 

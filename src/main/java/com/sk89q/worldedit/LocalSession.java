@@ -55,7 +55,7 @@ public class LocalSession {
 
     private LocalConfiguration config;
 
-    private long expirationTime = 0;
+    private long expirationTime = System.currentTimeMillis() + EXPIRATION_GRACE;
     private RegionSelector selector = new CuboidRegionSelector();
     private boolean placeAtPos1 = false;
     private LinkedList<EditSession> history = new LinkedList<EditSession>();
@@ -584,7 +584,7 @@ public class LocalSession {
 
         }
     }
-    
+
     public void describeCUI(LocalPlayer player) {
         if (!hasCUISupport) {
             return;
@@ -599,6 +599,22 @@ public class LocalSession {
                 tempSel.describeCUI(this, player);
             }
 
+        }
+    }
+
+    public void handleCUIInitializationMessage(String text) {
+        if (hasCUISupport()) {
+            return;
+        }
+
+        String[] split = text.split("\\|");
+        if (split.length > 1 && split[0].equalsIgnoreCase("v")) { // enough fields and right message
+            setCUISupport(true);
+            try {
+                setCUIVersion(Integer.parseInt(split[1]));
+            } catch (NumberFormatException e) {
+                WorldEdit.logger.warning("Error while reading CUI init message: " + e.getMessage());
+            }
         }
     }
 
@@ -617,13 +633,13 @@ public class LocalSession {
      * @param support
      */
     public void setCUISupport(boolean support) {
-        hasCUISupport = true;
+        hasCUISupport = support;
     }
 
     /**
      * Gets the client's CUI protocol version
-     * 
-     * @return 
+     *
+     * @return
      */
     public int getCUIVersion() {
         return cuiVersion;
@@ -631,8 +647,8 @@ public class LocalSession {
 
     /**
      * Sets the client's CUI protocol version
-     * 
-     * @param CUIVersion 
+     *
+     * @param CUIVersion
      */
     public void setCUIVersion(int CUIVersion) {
         this.cuiVersion = CUIVersion;
@@ -686,6 +702,9 @@ public class LocalSession {
                 new EditSession(player.isPlayer() ? player.getWorld() : null,
                         getBlockChangeLimit(), blockBag);
         editSession.setFastMode(fastMode);
+        if (mask != null) {
+            mask.prepare(this, player, null);
+        }
         editSession.setMask(mask);
 
         return editSession;

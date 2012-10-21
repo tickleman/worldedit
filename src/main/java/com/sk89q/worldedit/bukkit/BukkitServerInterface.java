@@ -19,18 +19,24 @@
 
 package com.sk89q.worldedit.bukkit;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.sk89q.bukkit.util.CommandInfo;
 import com.sk89q.bukkit.util.CommandRegistration;
 import com.sk89q.minecraft.util.commands.Command;
 
+import com.sk89q.minecraft.util.commands.CommandPermissions;
+import com.sk89q.minecraft.util.commands.CommandsManager;
+import com.sk89q.worldedit.LocalPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 
+import com.sk89q.worldedit.BiomeTypes;
 import com.sk89q.worldedit.LocalWorld;
 import com.sk89q.worldedit.ServerInterface;
 
@@ -38,10 +44,12 @@ public class BukkitServerInterface extends ServerInterface {
     public Server server;
     public WorldEditPlugin plugin;
     private CommandRegistration dynamicCommands;
+    private BukkitBiomeTypes biomes;
 
     public BukkitServerInterface(WorldEditPlugin plugin, Server server) {
         this.plugin = plugin;
         this.server = server;
+        this.biomes = new BukkitBiomeTypes();
         dynamicCommands = new CommandRegistration(plugin);
     }
 
@@ -63,6 +71,11 @@ public class BukkitServerInterface extends ServerInterface {
     }
 
     @Override
+    public BiomeTypes getBiomes() {
+        return biomes;
+    }
+
+    @Override
     public int schedule(long delay, long period, Runnable task) {
         return Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, task, delay, period);
     }
@@ -78,12 +91,23 @@ public class BukkitServerInterface extends ServerInterface {
 
         return ret;
     }
-    
+
     @Override
-    public void onCommandRegistration(List<Command> commands) {
-        dynamicCommands.registerAll(commands);
+    public void onCommandRegistration(List<Command> commands, CommandsManager<LocalPlayer> manager) {
+        List<CommandInfo> toRegister = new ArrayList<CommandInfo>();
+        for (Command command : commands) {
+            String[] permissions = null;
+            Method cmdMethod = manager.getMethods().get(null).get(command.aliases()[0]);
+            if (cmdMethod != null && cmdMethod.isAnnotationPresent(CommandPermissions.class)) {
+                permissions = cmdMethod.getAnnotation(CommandPermissions.class).value();
+            }
+
+            toRegister.add(new CommandInfo(command.usage(), command.desc(), command.aliases(), manager, permissions));
+        }
+
+        dynamicCommands.register(toRegister);
     }
-    
+
     public void unregisterCommands() {
         dynamicCommands.unregisterCommands();
     }

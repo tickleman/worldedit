@@ -159,7 +159,19 @@ public enum BlockType {
     END_STONE(BlockID.END_STONE, "End Stone", "endstone", "enderstone", "endersand"),
     DRAGON_EGG(BlockID.DRAGON_EGG, "Dragon Egg", "dragonegg", "dragons"),
     REDSTONE_LAMP_OFF(BlockID.REDSTONE_LAMP_OFF, "Redstone lamp (off)", "redstonelamp", "redstonelampoff", "rslamp", "rslampoff", "rsglow", "rsglowoff"),
-    REDSTONE_LAMP_ON(BlockID.REDSTONE_LAMP_ON, "Redstone lamp (on)", "redstonelampon", "rslampon", "rsglowon");
+    REDSTONE_LAMP_ON(BlockID.REDSTONE_LAMP_ON, "Redstone lamp (on)", "redstonelampon", "rslampon", "rsglowon"),
+    DOUBLE_WOODEN_STEP(BlockID.DOUBLE_WOODEN_STEP, "Double wood step", "doublewoodslab", "doublewoodstep"),
+    WOODEN_STEP(BlockID.WOODEN_STEP, "Wood step", "woodenslab", "woodslab", "woodstep", "woodhalfstep"),
+    COCOA_PLANT(BlockID.COCOA_PLANT, "Cocoa plant", "cocoplant", "cocoaplant"),
+    SANDSTONE_STAIRS(BlockID.SANDSTONE_STAIRS, "Sandstone stairs", "sandstairs", "sandstonestairs"),
+    EMERALD_ORE(BlockID.EMERALD_ORE, "Emerald ore", "emeraldore"),
+    ENDER_CHEST(BlockID.ENDER_CHEST, "Ender chest", "enderchest"),
+    TRIPWIRE_HOOK(BlockID.TRIPWIRE_HOOK, "Tripwire hook", "tripwirehook"),
+    TRIPWIRE(BlockID.TRIPWIRE, "Tripwire", "tripwire", "string"),
+    EMERALD_BLOCK(BlockID.EMERALD_BLOCK, "Emerald block", "emeraldblock", "emerald"),
+    SPRUCE_WOOD_STAIRS(BlockID.SPRUCE_WOOD_STAIRS, "Spruce wood stairs", "sprucestairs", "sprucewoodstairs"),
+    BIRCH_WOOD_STAIRS(BlockID.BIRCH_WOOD_STAIRS, "Birch wood stairs", "birchstairs", "birchwoodstairs"),
+    JUNGLE_WOOD_STAIRS(BlockID.JUNGLE_WOOD_STAIRS, "Jungle wood stairs", "junglestairs", "junglewoodstairs");
 
     /**
      * Stores a map of the IDs for fast access.
@@ -302,6 +314,9 @@ public enum BlockType {
         shouldPlaceLast.add(BlockID.PISTON_STICKY_BASE);
         shouldPlaceLast.add(BlockID.PISTON_EXTENSION);
         shouldPlaceLast.add(BlockID.PISTON_MOVING_PIECE);
+        shouldPlaceLast.add(BlockID.COCOA_PLANT);
+        shouldPlaceLast.add(BlockID.TRIPWIRE_HOOK);
+        shouldPlaceLast.add(BlockID.TRIPWIRE);
     }
 
     /**
@@ -391,9 +406,10 @@ public enum BlockType {
         canPassThrough.add(BlockID.PUMPKIN_STEM);
         canPassThrough.add(BlockID.MELON_STEM);
         canPassThrough.add(BlockID.VINE);
-        canPassThrough.add(BlockID.LILY_PAD);
         canPassThrough.add(BlockID.NETHER_WART);
         canPassThrough.add(BlockID.END_PORTAL);
+        canPassThrough.add(BlockID.TRIPWIRE_HOOK);
+        canPassThrough.add(BlockID.TRIPWIRE);
     }
 
     /**
@@ -416,10 +432,69 @@ public enum BlockType {
     }
 
     /**
+     * HashSet for centralTopLimit.
+     */
+    private static final Map<Integer, Double> centralTopLimit = new HashMap<Integer, Double>();
+    static {
+        centralTopLimit.put(BlockID.BED, 0.5625);
+        centralTopLimit.put(BlockID.BREWING_STAND, 0.875);
+        centralTopLimit.put(BlockID.CAKE_BLOCK, 0.4375);
+        centralTopLimit.put(BlockID.CAULDRON, 0.3125);
+        centralTopLimit.put(BlockID.COCOA_PLANT, 0.750);
+        centralTopLimit.put(BlockID.ENCHANTMENT_TABLE, 0.75);
+        for (int data = 0; data < 16; ++data) {
+            if ((data & 4) != 0) {
+                centralTopLimit.put(BlockID.END_PORTAL_FRAME, 0.8125);
+            }
+        }
+        centralTopLimit.put(BlockID.FENCE, 1.5);
+        centralTopLimit.put(BlockID.FENCE_GATE, 1.5);
+        for (int data = 0; data < 8; ++data) {
+            centralTopLimit.put(-16*BlockID.STEP-data, 0.5);
+            centralTopLimit.put(-16*BlockID.WOODEN_STEP-data, 0.5);
+        }
+        centralTopLimit.put(BlockID.LILY_PAD, 0.015625);
+        centralTopLimit.put(BlockID.REDSTONE_REPEATER_ON, .125);
+        centralTopLimit.put(BlockID.REDSTONE_REPEATER_OFF, .125);
+        centralTopLimit.put(BlockID.TRAP_DOOR, 0.1875);
+        centralTopLimit.put(BlockID.SLOW_SAND, 0.875);
+    }
+
+    /**
+     * Returns the y offset a player falls to when falling onto the top of a block at xp+0.5/zp+0.5.
+     *
+     * @param id
+     * @param data
+     * @return
+     */
+    public static double centralTopLimit(int id, int data) {
+        if (centralTopLimit.containsKey(id))
+            return centralTopLimit.get(id);
+
+        if (centralTopLimit.containsKey(-16*id-data))
+            return centralTopLimit.get(-16*id-data);
+
+        return canPassThrough(id) ? 0 : 1;
+    }
+
+    /**
+     * Returns the y offset a player falls to when falling onto the top of a block at xp+0.5/zp+0.5.
+     *
+     * @return
+     */
+    public double centralTopLimit() {
+        if (centralTopLimit.containsKey(id))
+            return centralTopLimit.get(id);
+
+        return canPassThrough(id) ? 0 : 1;
+    }
+
+    /**
      * HashSet for usesData.
      */
     private static final Set<Integer> usesData = new HashSet<Integer>();
     static {
+        usesData.add(BlockID.WOOD);
         usesData.add(BlockID.SAPLING);
         usesData.add(BlockID.WATER);
         usesData.add(BlockID.STATIONARY_WATER);
@@ -428,6 +503,7 @@ public enum BlockType {
         usesData.add(BlockID.LOG);
         usesData.add(BlockID.LEAVES);
         usesData.add(BlockID.DISPENSER);
+        usesData.add(BlockID.SANDSTONE);
         usesData.add(BlockID.BED);
         usesData.add(BlockID.POWERED_RAIL);
         usesData.add(BlockID.DETECTOR_RAIL);
@@ -486,6 +562,16 @@ public enum BlockType {
         usesData.add(BlockID.BREWING_STAND);
         usesData.add(BlockID.CAULDRON);
         usesData.add(BlockID.END_PORTAL_FRAME);
+        usesData.add(BlockID.DOUBLE_WOODEN_STEP);
+        usesData.add(BlockID.WOODEN_STEP);
+        usesData.add(BlockID.COCOA_PLANT);
+        usesData.add(BlockID.SANDSTONE_STAIRS);
+        usesData.add(BlockID.ENDER_CHEST);
+        usesData.add(BlockID.TRIPWIRE_HOOK);
+        usesData.add(BlockID.TRIPWIRE);
+        usesData.add(BlockID.SPRUCE_WOOD_STAIRS);
+        usesData.add(BlockID.BIRCH_WOOD_STAIRS);
+        usesData.add(BlockID.JUNGLE_WOOD_STAIRS);
     }
 
     /**
@@ -517,6 +603,7 @@ public enum BlockType {
         isContainerBlock.add(BlockID.BURNING_FURNACE);
         isContainerBlock.add(BlockID.CHEST);
         isContainerBlock.add(BlockID.BREWING_STAND);
+        //isContainerBlock.add(BlockID.ENDER_CHEST); // ender chest has no own inventory, don't add this here
     }
 
     /**
@@ -561,6 +648,7 @@ public enum BlockType {
         isRedstoneBlock.add(BlockID.NOTE_BLOCK);
         isRedstoneBlock.add(BlockID.REDSTONE_REPEATER_OFF);
         isRedstoneBlock.add(BlockID.REDSTONE_REPEATER_ON);
+        isRedstoneBlock.add(BlockID.TRIPWIRE_HOOK);
     }
 
     /**
@@ -627,6 +715,7 @@ public enum BlockType {
         isRedstoneSource.add(BlockID.STONE_PRESSURE_PLATE);
         isRedstoneSource.add(BlockID.WOODEN_PRESSURE_PLATE);
         isRedstoneSource.add(BlockID.STONE_BUTTON);
+        isRedstoneSource.add(BlockID.TRIPWIRE_HOOK);
     }
 
     /**
@@ -705,6 +794,7 @@ public enum BlockType {
         isNaturalTerrainBlock.add(BlockID.DIAMOND_ORE);
         isNaturalTerrainBlock.add(BlockID.REDSTONE_ORE);
         isNaturalTerrainBlock.add(BlockID.GLOWING_REDSTONE_ORE);
+        isNaturalTerrainBlock.add(BlockID.EMERALD_ORE);
     }
 
     /**
@@ -749,6 +839,7 @@ public enum BlockType {
         emitsLight.add(BlockID.RED_MUSHROOM_CAP);
         emitsLight.add(BlockID.END_PORTAL);
         emitsLight.add(BlockID.REDSTONE_LAMP_ON);
+        emitsLight.add(BlockID.ENDER_CHEST);
     }
 
     /**
@@ -770,7 +861,7 @@ public enum BlockType {
         isTranslucent.add(BlockID.SAPLING);
         isTranslucent.add(BlockID.WATER);
         isTranslucent.add(BlockID.STATIONARY_WATER);
-        //isTranslucent.add(BlockID.LEAVES);
+        isTranslucent.add(BlockID.LEAVES);
         isTranslucent.add(BlockID.GLASS);
         isTranslucent.add(BlockID.BED);
         isTranslucent.add(BlockID.POWERED_RAIL);
@@ -780,7 +871,7 @@ public enum BlockType {
         isTranslucent.add(BlockID.LONG_GRASS);
         isTranslucent.add(BlockID.DEAD_BUSH);
         //isTranslucent.add(BlockID.PISTON_BASE);
-        //isTranslucent.add(BlockID.PISTON_EXTENSION);
+        isTranslucent.add(BlockID.PISTON_EXTENSION);
         //isTranslucent.add(BlockID.PISTON_MOVING_PIECE);
         isTranslucent.add(BlockID.YELLOW_FLOWER);
         isTranslucent.add(BlockID.RED_FLOWER);
@@ -788,15 +879,16 @@ public enum BlockType {
         isTranslucent.add(BlockID.RED_MUSHROOM);
         isTranslucent.add(BlockID.TORCH);
         isTranslucent.add(BlockID.FIRE);
-        //isTranslucent.add(BlockID.MOB_SPAWNER);
-        //isTranslucent.add(BlockID.WOODEN_STAIRS);
+        isTranslucent.add(BlockID.MOB_SPAWNER);
+        isTranslucent.add(BlockID.WOODEN_STAIRS);
+        isTranslucent.add(BlockID.CHEST);
         isTranslucent.add(BlockID.REDSTONE_WIRE);
         isTranslucent.add(BlockID.CROPS);
         isTranslucent.add(BlockID.SIGN_POST);
         isTranslucent.add(BlockID.WOODEN_DOOR);
         isTranslucent.add(BlockID.LADDER);
         isTranslucent.add(BlockID.MINECART_TRACKS);
-        //isTranslucent.add(BlockID.COBBLESTONE_STAIRS);
+        isTranslucent.add(BlockID.COBBLESTONE_STAIRS);
         isTranslucent.add(BlockID.WALL_SIGN);
         isTranslucent.add(BlockID.LEVER);
         isTranslucent.add(BlockID.STONE_PRESSURE_PLATE);
@@ -807,7 +899,7 @@ public enum BlockType {
         isTranslucent.add(BlockID.STONE_BUTTON);
         isTranslucent.add(BlockID.SNOW);
         isTranslucent.add(BlockID.ICE);
-        //isTranslucent.add(BlockID.CACTUS);
+        isTranslucent.add(BlockID.CACTUS);
         isTranslucent.add(BlockID.REED);
         isTranslucent.add(BlockID.FENCE);
         isTranslucent.add(BlockID.PORTAL);
@@ -830,6 +922,15 @@ public enum BlockType {
         isTranslucent.add(BlockID.ENCHANTMENT_TABLE);
         isTranslucent.add(BlockID.BREWING_STAND);
         isTranslucent.add(BlockID.CAULDRON);
+        isTranslucent.add(BlockID.WOODEN_STEP);
+        isTranslucent.add(BlockID.COCOA_PLANT);
+        isTranslucent.add(BlockID.SANDSTONE_STAIRS);
+        isTranslucent.add(BlockID.ENDER_CHEST);
+        isTranslucent.add(BlockID.TRIPWIRE_HOOK);
+        isTranslucent.add(BlockID.TRIPWIRE);
+        isTranslucent.add(BlockID.SPRUCE_WOOD_STAIRS);
+        isTranslucent.add(BlockID.BIRCH_WOOD_STAIRS);
+        isTranslucent.add(BlockID.JUNGLE_WOOD_STAIRS);
     }
 
     /**
@@ -987,6 +1088,19 @@ public enum BlockType {
 
         addIdentity(BlockID.REDSTONE_LAMP_OFF);
         nonDataBlockBagItems.put(BlockID.REDSTONE_LAMP_ON, new BaseItem(BlockID.REDSTONE_LAMP_OFF));
+
+        addIdentities(BlockID.DOUBLE_WOODEN_STEP, 7); // rule 3
+        addIdentities(BlockID.WOODEN_STEP, 7); // rule 1
+        nonDataBlockBagItems.put(BlockID.COCOA_PLANT, new BaseItem(ItemID.INK_SACK, (short) (15 - ClothColor.ID.BROWN))); // rule 3
+        addIdentity(BlockID.SANDSTONE_STAIRS); // rule 1
+        nonDataBlockBagItems.put(BlockID.EMERALD_ORE, new BaseItem(ItemID.EMERALD)); // rule 5
+        addIdentity(BlockID.ENDER_CHEST); // rule 3
+        addIdentity(BlockID.TRIPWIRE_HOOK); // rule 1
+        nonDataBlockBagItems.put(BlockID.TRIPWIRE, new BaseItem(ItemID.STRING)); // rule 3
+        addIdentity(BlockID.EMERALD_BLOCK); // rule 1
+        addIdentity(BlockID.SPRUCE_WOOD_STAIRS); // rule 1
+        addIdentity(BlockID.BIRCH_WOOD_STAIRS); // rule 1
+        addIdentity(BlockID.JUNGLE_WOOD_STAIRS); // rule 1
     }
 
     /**
@@ -1280,6 +1394,13 @@ public enum BlockType {
         dataAttachments.put(typeDataKey(BlockID.VINE, 0), PlayerDirection.UP);
         addCardinals(BlockID.VINE, 1, 2, 4, 8);
         nonDataAttachments.put(BlockID.NETHER_WART, PlayerDirection.DOWN);
+        for (int offset = 0; offset <= 4; offset += 4) {
+            addCardinals(BlockID.COCOA_PLANT, offset + 0, offset + 1, offset + 2, offset + 3);
+        }
+        for (int offset = 0; offset <= 4; offset += 4) {
+            addCardinals(BlockID.TRIPWIRE_HOOK, offset + 2, offset + 3, offset + 0, offset + 1);
+        }
+        nonDataAttachments.put(BlockID.TRIPWIRE, PlayerDirection.DOWN);
     }
 
     /**

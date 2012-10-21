@@ -19,13 +19,28 @@
 
 package com.sk89q.worldedit.bukkit;
 
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import org.bukkit.Effect;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.TreeType;
+import org.bukkit.World;
+import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.Furnace;
+import org.bukkit.block.Chest;
 import org.bukkit.block.CreatureSpawner;
+import org.bukkit.block.Furnace;
 import org.bukkit.block.Sign;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Animals;
@@ -33,6 +48,7 @@ import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ExperienceOrb;
+import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.LivingEntity;
@@ -40,25 +56,38 @@ import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Painting;
 import org.bukkit.entity.TNTPrimed;
 import org.bukkit.entity.Tameable;
+import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.Effect;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.TreeType;
-import org.bukkit.World;
 
+import com.sk89q.worldedit.BiomeType;
 import com.sk89q.worldedit.BlockVector2D;
 import com.sk89q.worldedit.EditSession;
+import com.sk89q.worldedit.EntityType;
+import com.sk89q.worldedit.LocalEntity;
 import com.sk89q.worldedit.LocalWorld;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.Vector2D;
-import com.sk89q.worldedit.blocks.*;
-import com.sk89q.worldedit.EntityType;
+import com.sk89q.worldedit.WorldEdit;
+import com.sk89q.worldedit.blocks.BaseBlock;
+import com.sk89q.worldedit.blocks.BaseItemStack;
+import com.sk89q.worldedit.blocks.BlockID;
+import com.sk89q.worldedit.blocks.ContainerBlock;
+import com.sk89q.worldedit.blocks.FurnaceBlock;
+import com.sk89q.worldedit.blocks.MobSpawnerBlock;
+import com.sk89q.worldedit.blocks.NoteBlock;
+import com.sk89q.worldedit.blocks.SignBlock;
+import com.sk89q.worldedit.bukkit.entity.BukkitEntity;
 import com.sk89q.worldedit.regions.Region;
+import com.sk89q.worldedit.util.TreeGenerator;
 
 public class BukkitWorld extends LocalWorld {
+
+    private static final Logger logger = Logger.getLogger(BukkitWorld.class.getCanonicalName());
     private World world;
+    private boolean skipNmsAccess = false;
+    private boolean skipNmsSafeSet = false;
+    private boolean skipNmsValidBlockCheck = false;
 
     /**
      * Construct the object.
@@ -191,6 +220,31 @@ public class BukkitWorld extends LocalWorld {
     }
 
     /**
+     * Get biome type
+     *
+     * @param pt
+     * @return
+     */
+    @Override
+    public BiomeType getBiome(Vector2D pt) {
+        Biome bukkitBiome = world.getBiome(pt.getBlockX(), pt.getBlockZ());
+        try {
+            return BukkitBiomeType.valueOf(bukkitBiome.name());
+        } catch (IllegalArgumentException exc) {
+            return BiomeType.UNKNOWN;
+        }
+    }
+
+    @Override
+    public void setBiome(Vector2D pt, BiomeType biome) {
+        if (biome instanceof BukkitBiomeType) {
+            Biome bukkitBiome;
+            bukkitBiome = ((BukkitBiomeType) biome).getBukkitBiome();
+            world.setBiome(pt.getBlockX(), pt.getBlockZ(), bukkitBiome);
+        }
+    }
+
+    /**
      * Regenerate an area.
      *
      * @param region
@@ -301,6 +355,15 @@ public class BukkitWorld extends LocalWorld {
             return true;
         }
 
+        if (!skipNmsAccess) {
+            try {
+                return NmsBlock.set(world, pt, block);
+            } catch (Throwable t) {
+                logger.log(Level.WARNING, "WorldEdit: Failed to do NMS access for direct NBT data copy", t);
+                skipNmsAccess = true;
+            }
+        }
+
         return false;
     }
 
@@ -361,9 +424,38 @@ public class BukkitWorld extends LocalWorld {
             org.bukkit.block.NoteBlock bukkit = (org.bukkit.block.NoteBlock) state;
             NoteBlock we = (NoteBlock) block;
             we.setNote(bukkit.getRawNote());
+            return true;
         }
 
         return false;
+    }
+
+    /**
+     * Gets the single block inventory for a potentially double chest.
+     * Handles people who have an old version of Bukkit.
+     * This should be replaced with {@link org.bukkit.block.Chest#getBlockInventory()}
+     * in a few months (now = March 2012)
+     *
+     * @param chest The chest to get a single block inventory for
+     * @return The chest's inventory
+     */
+    private Inventory getBlockInventory(Chest chest) {
+        try {
+            return chest.getBlockInventory();
+        } catch (Throwable t) {
+            if (chest.getInventory() instanceof DoubleChestInventory) {
+                DoubleChestInventory inven = (DoubleChestInventory) chest.getInventory();
+                if (inven.getLeftSide().getHolder().equals(chest)) {
+                    return inven.getLeftSide();
+                } else if (inven.getRightSide().getHolder().equals(chest)) {
+                    return inven.getRightSide();
+                } else {
+                    return inven;
+                }
+            } else {
+                return chest.getInventory();
+            }
+        }
     }
 
     /**
@@ -384,6 +476,9 @@ public class BukkitWorld extends LocalWorld {
 
         org.bukkit.inventory.InventoryHolder chest = (org.bukkit.inventory.InventoryHolder) state;
         Inventory inven = chest.getInventory();
+        if (chest instanceof Chest) {
+            inven = getBlockInventory((Chest) chest);
+        }
         inven.clear();
         return true;
     }
@@ -395,9 +490,9 @@ public class BukkitWorld extends LocalWorld {
      * @return
      */
     @Override
+    @Deprecated
     public boolean generateTree(EditSession editSession, Vector pt) {
-        return world.generateTree(BukkitUtil.toLocation(world, pt), TreeType.TREE,
-                new EditSessionBlockChangeDelegate(editSession));
+        return generateTree(TreeGenerator.TreeType.TREE, editSession, pt);
     }
 
     /**
@@ -407,9 +502,9 @@ public class BukkitWorld extends LocalWorld {
      * @return
      */
     @Override
+    @Deprecated
     public boolean generateBigTree(EditSession editSession, Vector pt) {
-        return world.generateTree(BukkitUtil.toLocation(world, pt), TreeType.BIG_TREE,
-                new EditSessionBlockChangeDelegate(editSession));
+        return generateTree(TreeGenerator.TreeType.BIG_TREE, editSession, pt);
     }
 
     /**
@@ -419,9 +514,9 @@ public class BukkitWorld extends LocalWorld {
      * @return
      */
     @Override
+    @Deprecated
     public boolean generateBirchTree(EditSession editSession, Vector pt) {
-        return world.generateTree(BukkitUtil.toLocation(world, pt), TreeType.BIRCH,
-                new EditSessionBlockChangeDelegate(editSession));
+        return generateTree(TreeGenerator.TreeType.BIRCH, editSession, pt);
     }
 
     /**
@@ -431,9 +526,9 @@ public class BukkitWorld extends LocalWorld {
      * @return
      */
     @Override
+    @Deprecated
     public boolean generateRedwoodTree(EditSession editSession, Vector pt) {
-        return world.generateTree(BukkitUtil.toLocation(world, pt), TreeType.REDWOOD,
-                new EditSessionBlockChangeDelegate(editSession));
+        return generateTree(TreeGenerator.TreeType.REDWOOD, editSession, pt);
     }
 
     /**
@@ -443,8 +538,53 @@ public class BukkitWorld extends LocalWorld {
      * @return
      */
     @Override
+    @Deprecated
     public boolean generateTallRedwoodTree(EditSession editSession, Vector pt) {
-        return world.generateTree(BukkitUtil.toLocation(world, pt), TreeType.TALL_REDWOOD,
+        return generateTree(TreeGenerator.TreeType.TALL_REDWOOD, editSession, pt);
+    }
+
+    /**
+     * An EnumMap that stores which WorldEdit TreeTypes apply to which Bukkit TreeTypes
+     */
+    private static final EnumMap<TreeGenerator.TreeType, TreeType> treeTypeMapping =
+            new EnumMap<TreeGenerator.TreeType, TreeType>(TreeGenerator.TreeType.class);
+
+    static {
+        // Mappings for new TreeType values not yet in Bukkit
+        treeTypeMapping.put(TreeGenerator.TreeType.SWAMP, TreeType.TREE);
+        treeTypeMapping.put(TreeGenerator.TreeType.JUNGLE_BUSH, TreeType.TREE);
+        try {
+            treeTypeMapping.put(TreeGenerator.TreeType.SHORT_JUNGLE, TreeType.valueOf("SMALL_JUNGLE"));
+        } catch (IllegalArgumentException e) {
+            treeTypeMapping.put(TreeGenerator.TreeType.SHORT_JUNGLE, TreeType.TREE);
+        }
+        for (TreeGenerator.TreeType type : TreeGenerator.TreeType.values()) {
+            try {
+                TreeType bukkitType = TreeType.valueOf(type.name());
+                treeTypeMapping.put(type, bukkitType);
+            } catch (IllegalArgumentException e) {
+                // Unhandled TreeType
+            }
+        }
+        // Other mappings for WE-specific values
+        treeTypeMapping.put(TreeGenerator.TreeType.RANDOM, TreeType.BROWN_MUSHROOM);
+        treeTypeMapping.put(TreeGenerator.TreeType.RANDOM_REDWOOD, TreeType.REDWOOD);
+        treeTypeMapping.put(TreeGenerator.TreeType.PINE, TreeType.REDWOOD);
+        for (TreeGenerator.TreeType type : TreeGenerator.TreeType.values()) {
+            if (treeTypeMapping.get(type) == null) {
+                WorldEdit.logger.severe("No TreeType mapping for TreeGenerator.TreeType." + type);
+            }
+        }
+    }
+
+    public static TreeType toBukkitTreeType(TreeGenerator.TreeType type) {
+        return treeTypeMapping.get(type);
+    }
+
+    @Override
+    public boolean generateTree(TreeGenerator.TreeType type, EditSession editSession, Vector pt) {
+        TreeType bukkitType = toBukkitTreeType(type);
+        return type != null && world.generateTree(BukkitUtil.toLocation(world, pt), bukkitType,
                 new EditSessionBlockChangeDelegate(editSession));
     }
 
@@ -457,7 +597,7 @@ public class BukkitWorld extends LocalWorld {
     @Override
     public void dropItem(Vector pt, BaseItemStack item) {
         ItemStack bukkitItem = new ItemStack(item.getType(), item.getAmount(),
-                item.getDamage());
+                item.getData());
         world.dropItemNaturally(BukkitUtil.toLocation(world, pt), bukkitItem);
     }
 
@@ -475,6 +615,7 @@ public class BukkitWorld extends LocalWorld {
         boolean killNPCs = (flags & KillFlags.NPCS) != 0;
         boolean killAnimals = (flags & KillFlags.ANIMALS) != 0;
         boolean withLightning = (flags & KillFlags.WITH_LIGHTNING) != 0;
+        boolean killGolems = (flags & KillFlags.GOLEMS) != 0;
 
         int num = 0;
         double radiusSq = radius * radius;
@@ -493,6 +634,13 @@ public class BukkitWorld extends LocalWorld {
             if (!killPets && ent instanceof Tameable && ((Tameable) ent).isTamed()) {
                 continue; // tamed wolf
             }
+
+            try {
+                // Temporary solution to fix Golems being butchered.
+                if (!killGolems && Class.forName("org.bukkit.entity.Golem").isAssignableFrom(ent.getClass())) {
+                    continue;
+                }
+            } catch (ClassNotFoundException e) {}
 
             try {
                 // Temporary solution until org.bukkit.entity.NPC is widely deployed.
@@ -543,6 +691,11 @@ public class BukkitWorld extends LocalWorld {
                 }
             } else if (type == EntityType.ITEMS) {
                 if (ent instanceof Item) {
+                    ent.remove();
+                    ++num;
+                }
+            } else if (type == EntityType.FALLING_BLOCKS) {
+                if (ent instanceof FallingBlock) {
                     ent.remove();
                     ++num;
                 }
@@ -635,6 +788,9 @@ public class BukkitWorld extends LocalWorld {
 
         org.bukkit.inventory.InventoryHolder container = (org.bukkit.inventory.InventoryHolder) state;
         Inventory inven = container.getInventory();
+        if (container instanceof Chest) {
+            inven = getBlockInventory((Chest) container);
+        }
         int size = inven.getSize();
         BaseItemStack[] contents = new BaseItemStack[size];
 
@@ -675,6 +831,9 @@ public class BukkitWorld extends LocalWorld {
 
         org.bukkit.inventory.InventoryHolder chest = (org.bukkit.inventory.InventoryHolder) state;
         Inventory inven = chest.getInventory();
+        if (chest instanceof Chest) {
+            inven = getBlockInventory((Chest) chest);
+        }
         int size = inven.getSize();
 
         for (int i = 0; i < size; ++i) {
@@ -685,7 +844,7 @@ public class BukkitWorld extends LocalWorld {
             if (contents[i] != null) {
                 ItemStack toAdd = new ItemStack(contents[i].getType(),
                         contents[i].getAmount(),
-                        contents[i].getDamage());
+                        contents[i].getData());
                 try {
                     for (Map.Entry<Integer, Integer> entry : contents[i].getEnchantments().entrySet()) {
                         toAdd.addEnchantment(Enchantment.getById(entry.getKey()), entry.getValue());
@@ -708,7 +867,16 @@ public class BukkitWorld extends LocalWorld {
      */
     @Override
     public boolean isValidBlockType(int type) {
-        return type <= 255 && Material.getMaterial(type) != null;
+        if (!skipNmsValidBlockCheck) {
+            try {
+                return type == 0 || (type >= 1 && type < net.minecraft.server.Block.byId.length
+                        && net.minecraft.server.Block.byId[type] != null);
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, "Error checking NMS valid block type", e);
+                skipNmsValidBlockCheck = true;
+            }
+        }
+        return Material.getMaterial(type) != null && Material.getMaterial(type).isBlock();
     }
 
     @Override
@@ -766,5 +934,85 @@ public class BukkitWorld extends LocalWorld {
     @Override
     public void simulateBlockMine(Vector pt) {
         world.getBlockAt(pt.getBlockX(), pt.getBlockY(), pt.getBlockZ()).breakNaturally();
+    }
+
+    @Override
+    public LocalEntity[] getEntities(Region region) {
+        List<BukkitEntity> entities = new ArrayList<BukkitEntity>();
+        for (Vector2D pt : region.getChunks()) {
+            if (world.isChunkLoaded(pt.getBlockX(), pt.getBlockZ())) {
+                Entity[] ents = world.getChunkAt(pt.getBlockX(), pt.getBlockZ()).getEntities();
+                for (Entity ent : ents) {
+                    if (region.contains(BukkitUtil.toVector(ent.getLocation()))) {
+                        entities.add(BukkitUtil.toLocalEntity(ent));
+                    }
+                }
+            }
+        }
+        return entities.toArray(new BukkitEntity[entities.size()]);
+    }
+
+    @Override
+    public int killEntities(LocalEntity... entities) {
+        int amount = 0;
+        Set<UUID> toKill = new HashSet<UUID>();
+        for (LocalEntity entity : entities) {
+            toKill.add(((BukkitEntity) entity).getEntityId());
+        }
+        for (Entity entity : world.getEntities()) {
+            if (toKill.contains(entity.getUniqueId())) {
+                entity.remove();
+                ++amount;
+            }
+        }
+        return amount;
+    }
+
+    @Override
+    public BaseBlock getBlock(Vector pt) {
+        int type = getBlockType(pt);
+        int data = getBlockData(pt);
+
+        switch (type) {
+        case BlockID.WALL_SIGN:
+        case BlockID.SIGN_POST:
+        //case BlockID.CHEST: // Prevent data loss for now
+        //case BlockID.FURNACE:
+        //case BlockID.BURNING_FURNACE:
+        //case BlockID.DISPENSER:
+        //case BlockID.MOB_SPAWNER:
+        case BlockID.NOTE_BLOCK:
+            return super.getBlock(pt);
+        default:
+            if (!skipNmsAccess) {
+                try {
+                    NmsBlock block = NmsBlock.get(world, pt, type, data);
+                    if (block != null) {
+                        return block;
+                    }
+                } catch (Throwable t) {
+                    logger.log(Level.WARNING,
+                            "WorldEdit: Failed to do NMS access for direct NBT data copy", t);
+                    skipNmsAccess = true;
+                }
+            }
+        }
+
+        return super.getBlock(pt);
+    }
+
+    @Override
+    public boolean setBlock(Vector pt, com.sk89q.worldedit.foundation.Block block, boolean notifyAdjacent) {
+        if (!skipNmsSafeSet) {
+            try {
+                return NmsBlock.setSafely(this, pt, block, notifyAdjacent);
+            } catch (Throwable t) {
+                logger.log(Level.WARNING,
+                        "WorldEdit: Failed to do NMS safe block set", t);
+                skipNmsSafeSet = true;
+            }
+        }
+
+        return super.setBlock(pt, block, notifyAdjacent);
     }
 }
